@@ -1,0 +1,56 @@
+name: Tool baru
+description: Usul satu file baru di kotak. Bukan wishlist besar.
+title: "[tool] "
+labels: ["tool"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        KOTAK kecil: **satu tool, satu tugas**, MIT, bisa dibaca sekali duduk, tanpa secret.
+        Buka issue dulu. Jangan kirim PR berisi `.env` atau token.
+  - type: input
+    id: nama
+    attributes:
+      label: Nama
+      description: Pendek, seperti `han.sip` atau `jejak`.
+      placeholder: ronda.kata
+    validations:
+      required: true
+  - type: textarea
+    id: job
+    attributes:
+      label: Satu tugas
+      description: Satu kalimat. Kalau butuh "dan", mungkin dua tool.
+      placeholder: Hitung X. Bukan Y.
+    validations:
+      required: true
+  - type: textarea
+    id: cli
+    attributes:
+      label: CLI yang dibayangkan
+      render: bash
+      placeholder: |
+        node nama/cli.mjs
+        node nama/cli.mjs --help
+    validations:
+      required: true
+  - type: textarea
+    id: bukan
+    attributes:
+      label: Bukan urusan tool ini
+      placeholder: Tidak kirim jaringan. Tidak nulis .git. Tidak parse YAML.
+    validations:
+      required: true
+  - type: checkboxes
+    id: fit
+    attributes:
+      label: Fit
+      options:
+        - label: Satu tugas
+          required: true
+        - label: Bisa dibaca sekali duduk
+          required: true
+        - label: MIT, tanpa secret di git
+          required: true
+        - label: Ada cara mengetes tanpa nilai hidup
+          required: true
