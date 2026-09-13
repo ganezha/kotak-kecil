@@ -1,6 +1,6 @@
 # Rilis
 
-Belum npm. `private: true` itu disengaja. Rilis = git tag + GitHub Release + changelog.
+Belum npm. `private: true` itu disengaja. Distribusi = `npx github:ganezha/kotak-kecil`. Rilis = git tag + GitHub Release + changelog.
 
 ## Syarat
 
@@ -29,6 +29,7 @@ Belum npm. `private: true` itu disengaja. Rilis = git tag + GitHub Release + cha
 4. GitHub → Releases → **Draft a new release** dari tag `vX.Y.Z`.
    Body = isi seksi changelog versi itu, bukan esai.
 5. Jangan `npm publish` selama `"private": true`.
+6. Cek dari repo **lain**: `npx --yes github:ganezha/kotak-kecil#vX.Y.Z -- --help` harus mencetak usage.
 
 ## Kalau suatu hari npm
 

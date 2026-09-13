@@ -250,5 +250,5 @@ test("npm lifecycle tidak nulis .git", async () => {
     assert.equal(script, "", name);
     assert.equal(script.includes("pasang"), false, name);
   }
-  assert.equal(pkg.scripts["han.sip:pasang"], "node han.sip/pasang.mjs");
+  assert.equal(pkg.scripts["han.sip:pasang"], "node han.sip/cli.mjs pasang");
 });

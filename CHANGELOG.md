@@ -7,16 +7,23 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-14
+
 ### Added
 
-- **han.sip** flags that make the tool usable in a real repo, without new regex:
-  - `--json` — mesin
-  - `--sarif` — SARIF 2.1.0 (GitHub code scanning)
-  - `--diff [ref]` — hanya baris baru vs ref (default `HEAD`); `--staged --diff` = index
-  - `--ignore <pola>` dan `.han.sipignore` (`*`, `**`)
-  - `--baseline [file]` / `--write-baseline [file]` — fingerprint temuan lama, bukan nilai secret
-- `han.sip/lapor.mjs` — manusia / JSON / SARIF / baseline
-- Docs polish (CoC, issue/PR templates, INSTALL, EXAMPLES, VERSIONING, RELEASE, catatan desain)
+- **han.sip** flags: `--json`, `--sarif`, `--diff [ref]`, `--ignore` / `.han.sipignore`, `--baseline` / `--write-baseline`. Fingerprint, bukan nilai secret.
+- `han.sip pasang` — pre-commit di **repo mana pun**. Shim memakai `han.sip/cli.mjs` lokal kalau ada, selain itu `npx github:ganezha/kotak-kecil`.
+- Instalasi tanpa clone: `npx --yes github:ganezha/kotak-kecil -- .`
+- Template CI+SARIF: [`templates/github-actions.yml`](templates/github-actions.yml)
+- Docs: CoC, issue/PR templates, INSTALL, EXAMPLES, VERSIONING, RELEASE, catatan desain
+
+### Fixed
+
+- CLI `main()` jalan lewat bin symlink npm/npx (dulu diam, exit 0, tanpa output)
+
+### Changed
+
+- `package.json` tetap `"private": true`. Distribusi = GitHub (`npx github:…`). Bukan npm registry.
 
 ## [0.2.0] — 2026-09-13
 
@@ -60,7 +67,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ganezha/kotak-kecil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ganezha/kotak-kecil/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ganezha/kotak-kecil/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ganezha/kotak-kecil/compare/v0.0.1...v0.1.0

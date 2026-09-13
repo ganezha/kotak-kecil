@@ -2,7 +2,37 @@
 
 Salin apa adanya. Output disingkat. Isi secret **tidak pernah** muncul.
 
-Syarat: [INSTALL.md](INSTALL.md). Dari root clone `kotak-kecil`, kecuali disebutkan lain.
+Syarat: [INSTALL.md](INSTALL.md).
+
+## Di repo kamu (tanpa clone)
+
+```bash
+npx --yes github:ganezha/kotak-kecil -- .
+npx --yes github:ganezha/kotak-kecil -- --staged
+npx --yes github:ganezha/kotak-kecil -- --diff
+npx --yes github:ganezha/kotak-kecil -- --json .
+npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.3.0 -- --quiet .
+```
+
+## GitHub Actions
+
+Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.github/workflows/han.sip.yml`.
+
+Inti:
+
+```yaml
+- run: npx --yes github:ganezha/kotak-kecil -- --quiet .
+- run: npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: han.sip.sarif
+```
+
+Butuh `permissions: { contents: read, security-events: write }` (repo publik).
+
+Dari root clone `kotak-kecil`, perintah `node han.sip/cli.mjs …` di bawah ini sama artinya.
 
 ## han.sip
 

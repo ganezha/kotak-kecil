@@ -2,61 +2,55 @@
 
 Node **18+** (CI pakai **22**). Git di PATH. Tidak ada dependency npm.
 
-Belum terbit di registry. Jangan `npm i han.sip`.
+Belum terbit di registry. **Jangan** `npm i han.sip`.
 
-## Clone (cara utama)
+## Satu perintah (cara utama)
+
+Di repo kamu:
+
+```bash
+npx --yes github:ganezha/kotak-kecil -- .
+```
+
+Pin rilis:
+
+```bash
+npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .
+```
+
+`0` = sip. `1` = ada temuan (path + kind, **bukan** nilai secret). `2` = gagal jalan.
+
+```bash
+npx --yes github:ganezha/kotak-kecil -- --help
+npx --yes github:ganezha/kotak-kecil -- --staged
+npx --yes github:ganezha/kotak-kecil -- --diff
+npx --yes github:ganezha/kotak-kecil -- --json .
+npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil -- pasang
+```
+
+`pasang` menulis `.git/hooks/pre-commit` di **repo ini**. Tidak global. Tidak lewat `npm prepare`.
+
+## GitHub Actions
+
+Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Itu meronda checkout dan mengunggah SARIF ke code scanning.
+
+## Clone (mengembangkan kotak)
 
 ```bash
 git clone https://github.com/ganezha/kotak-kecil.git
 cd kotak-kecil
 node han.sip/cli.mjs --help
-node jejak/cli.mjs --help
 npm test
 ```
 
-Tidak perlu `npm install`. Skrip di `package.json` hanya pintasan:
-
-```bash
-npm run han.sip          # ronda folder .
-npm run han.sip:staged   # ronda git index
-npm run han.sip:pasang   # pre-commit di repo ini
-npm run jejak            # 14 hari
-```
-
-Flag lain: `--diff`, `--json`, `--sarif`, `--ignore`, `--baseline`. Lihat [EXAMPLES.md](EXAMPLES.md).
-
-## Pakai di repo lain, tanpa clone toolbox
-
-Salin file, atau rujuk path absolut ke clone.
-
-```bash
-# dari repo kamu, kalau kotak-kecil ada di samping
-node ../kotak-kecil/han.sip/cli.mjs --staged
-node ../kotak-kecil/jejak/cli.mjs 30
-```
-
-Hook pre-commit di repo *ini* (kotak-kecil) dipasang manual:
-
-```bash
-node han.sip/pasang.mjs
-node han.sip/pasang.mjs --check
-```
-
-Itu nulis shim `0755` di `.git/hooks/pre-commit` → `node .githooks/pre-commit.mjs`. Tidak global. Tidak lewat `npm prepare`.
-
-Kalau `han.sip/cli.mjs` tidak ada di repo target, hook fallback ke:
-
-```bash
-npx --yes github:ganezha/kotak-kecil -- --staged --quiet
-```
+Tidak perlu `npm install`. Skrip di `package.json` hanya pintasan.
 
 ## gitignore Node yang ketat
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/node.gitignore -o .gitignore
 ```
-
-Menutup `.env`, `.env.*` (kecuali `.env.example`), `*.pem` / `*.key` / `*.p12` / `*.pfx`, `private.txt`, `secrets/`.
 
 ## Kerangka `.env`
 
@@ -71,7 +65,7 @@ cp .env.example .env
 | | |
 |---|---|
 | Node | 18+, ESM (`"type": "module"`) |
-| git | wajib untuk `--staged`, `pasang`, `jejak` |
+| git | wajib untuk `--staged`, `pasang`, `jejak`, `--diff` |
 | OS | apa pun yang punya `git` + `node` |
 
-Exit: `0` sip, `1` temuan (han.sip), `2` gagal jalan (bukan git repo, git hilang, dsb).
+Exit: `0` sip, `1` temuan (han.sip), `2` gagal jalan.

@@ -1,3 +1,6 @@
+# Salin ke .github/workflows/han.sip.yml di repo kamu.
+# Pin opsional: ganti github:ganezha/kotak-kecil menjadi
+# github:ganezha/kotak-kecil#v0.3.0
 name: han.sip
 
 on:
@@ -17,19 +20,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: tes
-        run: node --test tes/*.test.mjs
+
       - name: ronda malam
-        run: node han.sip/cli.mjs .
-      - name: jejak
-        run: node jejak/cli.mjs
+        run: npx --yes github:ganezha/kotak-kecil -- --quiet .
+
       - name: SARIF
         if: always()
-        run: node han.sip/cli.mjs --sarif . > han.sip.sarif
+        run: npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
+
       - name: upload SARIF
         if: always()
-        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
         with:
           sarif_file: han.sip.sarif
           wait-for-processing: false
