@@ -13,7 +13,7 @@ npx --yes github:ganezha/kotak-kecil -- --diff
 npx --yes github:ganezha/kotak-kecil -- --json .
 npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
 npx --yes github:ganezha/kotak-kecil -- pasang
-npx --yes github:ganezha/kotak-kecil#v0.3.0 -- --quiet .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --quiet .
 ```
 
 `--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
@@ -138,7 +138,7 @@ node han.sip/cli.mjs --sarif . > han.sip.sarif
 # Actions: upload han.sip.sarif pakai github/codeql-action/upload-sarif
 ```
 
-`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — hanya `file`, `line`, `kind`, `fp`.
+`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — hanya `file`, `line`, `kind`, `fp`. `fp` = fingerprint turunan (SHA-256 dipotong), bukan plaintext. Lihat [SECURITY.md](../SECURITY.md).
 
 `ok: true` = sip. `ok: false` = ada temuan. `hits[].kind` + `hits[].file` — tidak ada nilai token.
 
@@ -158,20 +158,28 @@ docs/EXAMPLES.md
 
 ### Baseline (repo yang sudah kotor)
 
+Baseline = temuan yang **diterima / di-suppress**. Bukan berarti secret itu aman, hilang, atau sudah di-rotate.
+
 ```bash
 node han.sip/cli.mjs --write-baseline .han.sip-baseline.json .
-# exit 0. file berisi fingerprint, bukan token.
+# exit 0. file berisi fingerprint turunan + note, bukan token.
+# note: "diterima/di-suppress, bukan aman."
 git add .han.sip-baseline.json
 
 node han.sip/cli.mjs --baseline .
-# sip kalau tidak ada temuan baru
+# sip kalau tidak ada temuan *baru*
+# "sip. N diterima di baseline — bukan aman."
 ```
+
+Kalau nilai itu sempat masuk git: rotate dulu, baru tulis baseline.
 
 Gabung: `--baseline --write-baseline` menulis set *sekarang* (refresh), lalu exit menurut temuan baru vs file lama.
 
 ### Yang ditangkap (bentuk, bukan nilai)
 
-File: `.env`, `.env.*` kecuali `.env.example`, `*.pem` `*.key` `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk.
+File: `.env`, `.env.*` kecuali nama `.env.example`, `*.pem` `*.key` `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk.
+
+`.env.example` tidak dihitung `env-file`. **Isinya tetap dironda.** `API_KEY=` lolos. Token berbentuk secret di situ tidak.
 
 Isi: private key PEM, `ghp_` / `github_pat_`, token Telegram, `AKIA…`, Slack `xox*`, Stripe, OpenAI, Anthropic, Google `AIza`, `npm_`, GitLab `glpat-`, Hugging Face `hf_`.
 
@@ -216,7 +224,7 @@ curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/templates/
 cp .env.example .env
 ```
 
-`.env.example` boleh berisi *bentuk* token di tes; han.sip **tidak** meronda file bernama `.env.example`.
+`.env.example` untuk nilai **kosong**. Token berbentuk secret di file itu = temuan. Model: [SECURITY.md](../SECURITY.md).
 
 ## Tes (bukan CLI produk, tapi sering dipakai)
 

@@ -7,6 +7,14 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-14
+
+### Security
+
+- **`.env.example`**: nama file bukan temuan `env-file`. **Isi tetap dironda.** Nilai kosong/placeholder lolos; token berbentuk secret tidak.
+- **Baseline**: berarti temuan *diterima/di-suppress*, **bukan** aman. Output manusia, `note` di file baseline, `baseline.safe: false` di JSON.
+- **Fingerprint**: SHA-256 turunan dari kind + path + potongan yang cocok rule, dipotong 16 hex, non-reversible. Bukan plaintext; tetap bukti material secret-shaped. Model: [SECURITY.md](SECURITY.md).
+
 ### Changed
 
 - README/INSTALL/EXAMPLES: tabel hasil (`sip.` / `! jenis lokasi` / exit 2), Node 18+, jangan `npm i han.sip`.
@@ -76,7 +84,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ganezha/kotak-kecil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ganezha/kotak-kecil/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ganezha/kotak-kecil/compare/v0.1.0...v0.1.1

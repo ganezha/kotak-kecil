@@ -67,7 +67,8 @@ export const CONTENT_RULES = [
   { kind: "huggingface-token", re: /\bhf_[A-Za-z0-9]{20,}/ },
 ];
 
-export const ALLOW_FILE = (name) => name === ".env.example";
+/** Nama template. Bukan temuan env-file. Isi tetap dironda. */
+export const isExampleEnv = (name) => name === ".env.example";
 
 export const IGNORE_FILE = ".han.sipignore";
 
@@ -75,6 +76,14 @@ export function posixPath(p) {
   return String(p).split(path.sep).join("/");
 }
 
+/**
+ * Fingerprint turunan, bukan plaintext token.
+ *
+ * sha256(kind || NUL || posix(file) || NUL || matched_piece) → 16 hex.
+ * `piece` adalah potongan yang cocok rule (bisa material secret).
+ * SHA-256 satu arah; 16 hex (64 bit) tidak bisa dikembalikan ke nilai.
+ * Bukan credential. Tetap bukti bahwa string berbentuk secret ada di path itu.
+ */
 export function fingerprint(kind, file, piece = "") {
   const h = createHash("sha256");
   h.update(kind);
@@ -206,7 +215,7 @@ export async function readStaged(root, relPath) {
 
 export function scanName(relFile, hits) {
   const name = path.basename(relFile);
-  if (ALLOW_FILE(name)) return;
+  if (isExampleEnv(name)) return;
   for (const rule of FILE_RULES) {
     if (rule.test(name)) pushHit(hits, relFile, 0, rule.kind);
   }
@@ -215,8 +224,6 @@ export function scanName(relFile, hits) {
 export function scanContent(relFile, text, hits) {
   if (text == null) return;
   if (text.includes("\u0000")) return;
-  const name = path.basename(relFile);
-  if (ALLOW_FILE(name)) return;
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
     scanLine(relFile, i + 1, lines[i], hits);
@@ -225,8 +232,6 @@ export function scanContent(relFile, text, hits) {
 
 export function scanLine(relFile, line, text, hits) {
   if (text == null || text.includes("\u0000")) return;
-  const name = path.basename(relFile);
-  if (ALLOW_FILE(name)) return;
   for (const rule of CONTENT_RULES) {
     const m = rule.re.exec(text);
     if (m) pushHit(hits, relFile, line, rule.kind, m[0]);
@@ -259,8 +264,6 @@ export async function scanFolder(root, { ignore = [] } = {}) {
     const shown = path.relative(root, file) || file;
     if (isIgnored(shown, ignore)) continue;
     count += 1;
-    const name = path.basename(file);
-    if (ALLOW_FILE(name)) continue;
     scanName(shown, hits);
     let info;
     try {
@@ -289,7 +292,6 @@ export async function scanStaged(root, { ignore = [] } = {}) {
     if (SKIP_EXT.has(path.extname(name).toLowerCase())) continue;
     if (isIgnored(relFile, ignore)) continue;
     count += 1;
-    if (ALLOW_FILE(name)) continue;
     scanName(relFile, hits);
     let buf;
     try {
@@ -393,7 +395,6 @@ export async function scanDiff(
     if (SKIP_EXT.has(path.extname(name).toLowerCase())) continue;
     if (isIgnored(relFile, ignore)) continue;
     count += 1;
-    if (ALLOW_FILE(name)) continue;
     scanName(relFile, hits);
     for (const row of file.added) {
       scanLine(relFile, row.line, row.text, hits);

@@ -1,11 +1,15 @@
 /**
- * Laporan: manusia, JSON, SARIF. Baseline menyimpan fingerprint, bukan secret.
+ * Laporan: manusia, JSON, SARIF.
+ * Baseline menyimpan fingerprint turunan (SHA-256 dipotong), bukan plaintext.
+ * Baseline = temuan yang diterima/di-suppress — bukan “aman”.
  */
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { posixPath } from "./ronda.mjs";
 
 export const DEFAULT_BASELINE = ".han.sip-baseline.json";
+export const BASELINE_NOTE =
+  "diterima/di-suppress, bukan aman. Kalau sempat masuk git: rotate.";
 
 function where(hit) {
   return hit.line ? `${hit.file}:${hit.line}` : hit.file;
@@ -20,11 +24,14 @@ function modeTag({ staged, diff }) {
 
 export function printHuman({ count, hits, staged, diff, quiet, suppressed }) {
   const extra = modeTag({ staged, diff });
+  const accepted = suppressed
+    ? `${suppressed} diterima di baseline — bukan aman.`
+    : "";
   if (hits.length === 0) {
     if (!quiet) {
       console.log("han.sip");
       console.log(`ronda: ${count} file${extra}`);
-      console.log(suppressed ? `sip. ${suppressed} di baseline.` : "sip.");
+      console.log(accepted ? `sip. ${accepted}` : "sip.");
     }
     return 0;
   }
@@ -36,7 +43,7 @@ export function printHuman({ count, hits, staged, diff, quiet, suppressed }) {
     console.log(`! ${hit.kind.padEnd(16)} ${where(hit)}`);
   }
   console.log("");
-  const base = suppressed ? ` ${suppressed} di baseline.` : "";
+  const base = accepted ? ` ${accepted}` : "";
   console.log(`bukan sip. ${hits.length} temuan.${base}`);
   console.log("Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.");
   return 1;
@@ -63,7 +70,13 @@ export function toJson({
     diff: diff || false,
     hits: hits.map(publicHit),
   };
-  if (baseline) body.baseline = { file: baseline, suppressed: suppressed || 0 };
+  if (baseline) {
+    body.baseline = {
+      file: baseline,
+      suppressed: suppressed || 0,
+      safe: false,
+    };
+  }
   if (wrote) body.wrote = wrote;
   return `${JSON.stringify(body, null, 2)}\n`;
 }
@@ -136,6 +149,7 @@ export function splitBaseline(hits, fps) {
 export async function writeBaseline(file, hits) {
   const body = {
     version: 1,
+    note: BASELINE_NOTE,
     hits: hits.map(({ file: f, kind, fp }) => ({
       file: posixPath(f),
       kind,

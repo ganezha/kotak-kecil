@@ -48,7 +48,7 @@ npx --yes github:ganezha/kotak-kecil -- pasang
 
 CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`.
 
-Pin rilis: `npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .`
+Pin rilis: `npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .`
 
 Belum npm registry. **Jangan** `npm i han.sip`.
 
@@ -64,7 +64,7 @@ node han.sip/cli.mjs --staged    # git index
 node han.sip/cli.mjs --diff      # baris baru vs HEAD
 node han.sip/cli.mjs --json
 node han.sip/cli.mjs --sarif     # GitHub code scanning
-node han.sip/cli.mjs --baseline  # temuan lama tidak gagal
+node han.sip/cli.mjs --baseline  # temuan diterima — bukan aman
 node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 
@@ -74,7 +74,7 @@ node han.sip/cli.mjs pasang      # pre-commit (manual)
 npm test
 ```
 
-Desain: [docs/han.sip.md](docs/han.sip.md). Contoh: [docs/EXAMPLES.md](docs/EXAMPLES.md). Pasang: [docs/INSTALL.md](docs/INSTALL.md).
+Desain: [docs/han.sip.md](docs/han.sip.md). Model keamanan: [SECURITY.md](SECURITY.md). Contoh: [docs/EXAMPLES.md](docs/EXAMPLES.md). Pasang: [docs/INSTALL.md](docs/INSTALL.md).
 
 ### [`jejak`](jejak/cli.mjs)
 

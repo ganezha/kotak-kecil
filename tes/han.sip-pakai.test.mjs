@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
 import { parseArgs } from "../han.sip/cli.mjs";
-import { matchGlob, parseIgnore, parseUnifiedDiff } from "../han.sip/ronda.mjs";
+import { BASELINE_NOTE } from "../han.sip/lapor.mjs";
+import { fingerprint, matchGlob, parseIgnore, parseUnifiedDiff } from "../han.sip/ronda.mjs";
 import { palsu } from "./palsu.mjs";
 
 const execFileP = promisify(execFile);
@@ -179,10 +181,13 @@ test("--baseline: temuan lama sip, temuan baru gagal", async () => {
     assert.equal(written.code, 0);
     const raw = JSON.parse(await readFile(path.join(dir, "base.json"), "utf8"));
     assert.equal(raw.hits.length, 1);
+    assert.equal(raw.note, BASELINE_NOTE);
+    assert.match(raw.note, /bukan aman/);
     assert.equal(JSON.stringify(raw).includes(a), false);
 
-    const frozen = await runCli(["--baseline", "base.json", "--quiet", "."], dir);
+    const frozen = await runCli(["--baseline", "base.json", "."], dir);
     assert.equal(frozen.code, 0);
+    assert.match(frozen.stdout, /bukan aman/);
 
     await writeFile(path.join(dir, "new.js"), `export const t = "${b}"\n`);
     const neu = await runCli(["--baseline=base.json", "--json", "."], dir);
@@ -191,6 +196,7 @@ test("--baseline: temuan lama sip, temuan baru gagal", async () => {
     assert.equal(body.hits.length, 1);
     assert.equal(body.hits[0].file, "new.js");
     assert.equal(body.baseline.suppressed, 1);
+    assert.equal(body.baseline.safe, false);
     assert.equal(neu.stdout.includes(a), false);
     assert.equal(neu.stdout.includes(b), false);
   } finally {
@@ -296,6 +302,24 @@ test("symlink bin (npx) tetap menjalankan main", async () => {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("fingerprint: SHA-256 turunan, 16 hex, tidak bisa dikembalikan ke token", () => {
+  const token = palsu.github();
+  const fp = fingerprint("github-token", "app.js", token);
+  assert.match(fp, /^[0-9a-f]{16}$/);
+  assert.equal(fp.includes(token), false);
+  assert.equal(token.includes(fp), false);
+  const full = createHash("sha256")
+    .update("github-token")
+    .update("\0")
+    .update("app.js")
+    .update("\0")
+    .update(token)
+    .digest("hex");
+  assert.equal(fp, full.slice(0, 16));
+  assert.notEqual(fingerprint("github-token", "other.js", token), fp);
+  assert.equal(fingerprint("github-token", "app.js", token), fp);
 });
 
 test("han.sip pasang: hook self-contained, --check sip", async () => {
