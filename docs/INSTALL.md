@@ -23,6 +23,8 @@ npm run han.sip:pasang   # pre-commit di repo ini
 npm run jejak            # 14 hari
 ```
 
+Flag lain: `--diff`, `--json`, `--sarif`, `--ignore`, `--baseline`. Lihat [EXAMPLES.md](EXAMPLES.md).
+
 ## Pakai di repo lain, tanpa clone toolbox
 
 Salin file, atau rujuk path absolut ke clone.

@@ -83,6 +83,55 @@ node han.sip/pasang.mjs --check
 
 Commit berikutnya: yang di-stage dironda. Unstaged `.env` tidak menghalangi (itu kerjaan folder scan / CI).
 
+### Diff — hanya baris baru
+
+Secret yang sudah di `HEAD` tidak teriak. Yang baru kamu ketik, iya.
+
+```bash
+node han.sip/cli.mjs --diff              # vs HEAD (working tree + index)
+node han.sip/cli.mjs --diff origin/main  # PR
+node han.sip/cli.mjs --staged --diff     # baris baru di index
+```
+
+File belum `git add` tidak masuk `--diff`. Pakai `.` atau `--staged`.
+
+### JSON / SARIF
+
+```bash
+node han.sip/cli.mjs --json .
+node han.sip/cli.mjs --sarif . > han.sip.sarif
+# Actions: upload han.sip.sarif pakai github/codeql-action/upload-sarif
+```
+
+`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — hanya `file`, `line`, `kind`, `fp`.
+
+### Ignore
+
+```bash
+node han.sip/cli.mjs --ignore 'docs/**' --ignore '*.md' .
+```
+
+Atau file di root repo:
+
+```gitignore
+# .han.sipignore
+vendor/**
+docs/EXAMPLES.md
+```
+
+### Baseline (repo yang sudah kotor)
+
+```bash
+node han.sip/cli.mjs --write-baseline .han.sip-baseline.json .
+# exit 0. file berisi fingerprint, bukan token.
+git add .han.sip-baseline.json
+
+node han.sip/cli.mjs --baseline .
+# sip kalau tidak ada temuan baru
+```
+
+Gabung: `--baseline --write-baseline` menulis set *sekarang* (refresh), lalu exit menurut temuan baru vs file lama.
+
 ### Yang ditangkap (bentuk, bukan nilai)
 
 File: `.env`, `.env.*` kecuali `.env.example`, `*.pem` `*.key` `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk.
