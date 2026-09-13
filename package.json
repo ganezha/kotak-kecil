@@ -1,6 +1,6 @@
 {
   "name": "han.sip",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Ronda malam untuk git. Teriak pelan kalau ada secret.",
   "type": "module",
   "bin": {
@@ -21,6 +21,7 @@
     "prepare": "node han.sip/pasang.mjs",
     "han.sip": "node han.sip/cli.mjs .",
     "han.sip:staged": "node han.sip/cli.mjs --staged",
-    "han.sip:pasang": "node han.sip/pasang.mjs"
+    "han.sip:pasang": "node han.sip/pasang.mjs",
+    "test": "node --test tes/*.test.mjs"
   }
 }

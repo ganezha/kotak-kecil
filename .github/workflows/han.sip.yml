@@ -13,5 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: tes
+        run: node --test tes/*.test.mjs
       - name: ronda malam
         run: node han.sip/cli.mjs .

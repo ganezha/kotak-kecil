@@ -20,6 +20,10 @@ node han.sip/pasang.mjs          # pre-commit di repo ini
 
 Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global.
 
+```bash
+npm test                       # fixture .env, staged vs unstaged, token palsu
+```
+
 ### [`gitignore/node.gitignore`](gitignore/node.gitignore)
 
 Strict gitignore for Node.js so `.env`, private keys, and dumps never reach GitHub.

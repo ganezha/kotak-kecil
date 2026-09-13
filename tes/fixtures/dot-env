@@ -1,0 +1,2 @@
+# fixture — tes menyalin ini jadi .env di folder tmp
+API_KEY=jangan-cetak-nilai-ini
