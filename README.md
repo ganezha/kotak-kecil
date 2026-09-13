@@ -26,6 +26,8 @@ Belum terbit npm. Kalau nanti terbit: pasang tetap perintah di atas.
 npm test                       # fixture .env, staged vs unstaged, token palsu
 ```
 
+Desain: [docs/han.sip.md](docs/han.sip.md). Contoh: [docs/EXAMPLES.md](docs/EXAMPLES.md).
+
 ### [`jejak`](jejak/cli.mjs)
 
 Commit per hari. Graph baru hidup di hari ke-2.
@@ -34,6 +36,8 @@ Commit per hari. Graph baru hidup di hari ke-2.
 node jejak/cli.mjs        # 14 hari
 node jejak/cli.mjs 30
 ```
+
+Desain: [docs/jejak.md](docs/jejak.md).
 
 ### [`gitignore/node.gitignore`](gitignore/node.gitignore)
 
@@ -46,6 +50,13 @@ curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/
 ### [`templates/env.example`](templates/env.example)
 
 Kerangka `.env` kosong. Salin, isi lokal, file aslinya tidak masuk git.
+
+## Docs
+
+- [Pasang](docs/INSTALL.md)
+- [Contoh CLI](docs/EXAMPLES.md)
+- [Versi](docs/VERSIONING.md) · [Rilis](docs/RELEASE.md) · [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md)
 
 ## —
 

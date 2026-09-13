@@ -1,0 +1,28 @@
+name: Lain
+description: Docs, detector, pertanyaan. Bukan bug, bukan tool baru.
+title: "[lain] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cek [INSTALL.md](https://github.com/ganezha/kotak-kecil/blob/main/docs/INSTALL.md) dan [EXAMPLES.md](https://github.com/ganezha/kotak-kecil/blob/main/docs/EXAMPLES.md) dulu.
+        Secret: jangan tempel. Pakai advisory.
+  - type: dropdown
+    id: topik
+    attributes:
+      label: Topik
+      options:
+        - docs / typo
+        - detector (kind baru)
+        - versi / rilis
+        - pertanyaan
+        - lain
+    validations:
+      required: true
+  - type: textarea
+    id: isi
+    attributes:
+      label: Isi
+    validations:
+      required: true

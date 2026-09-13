@@ -1,0 +1,55 @@
+name: Bug
+description: han.sip, jejak, pasang, atau tes tidak sesuai kontrak.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Jangan tempel token, key, isi `.env`, atau secret apa pun.
+        Laporan: path, nomor baris, **kind** — bukan nilai.
+        Kalau secret sudah masuk git: rotate, lalu advisory — lihat SECURITY.md.
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool
+      options:
+        - han.sip
+        - han.sip pasang
+        - jejak
+        - gitignore / env.example
+        - tes / CI
+        - docs
+        - lain
+    validations:
+      required: true
+  - type: textarea
+    id: expect
+    attributes:
+      label: Yang diharapkan
+      placeholder: exit 0, diam di --quiet, kind env-file di .env, …
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Yang terjadi
+      placeholder: exit code, stderr, kind yang salah. Tanpa nilai secret.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Repro
+      description: Perintah dan, kalau perlu, file palsu. Token palsu dirakit di runtime, jangan commit bentuk secret.
+      render: bash
+      placeholder: |
+        node han.sip/cli.mjs --staged --quiet
+        node jejak/cli.mjs 7
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Node + OS
+      placeholder: "Node 22.11, git 2.47, Linux"

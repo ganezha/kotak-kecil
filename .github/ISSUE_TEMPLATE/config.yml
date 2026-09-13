@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security / secret bocor
+    url: https://github.com/ganezha/kotak-kecil/security/advisories/new
+    about: Jangan buka issue publik untuk token, key, atau .env. Rotate dulu.
+  - name: Cara pasang & contoh CLI
+    url: https://github.com/ganezha/kotak-kecil/blob/main/docs/INSTALL.md
+    about: INSTALL.md dan EXAMPLES.md — cek dulu sebelum tanya cara jalan.
