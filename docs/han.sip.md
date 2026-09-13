@@ -84,16 +84,21 @@ Pre-commit **fail closed**: node/git hilang → commit ditolak (`2`), bukan dile
 
 ## Pasang
 
-Git tree sering `0644`, jadi `pasang` tidak andalkan bit `+x` pada `.githooks/pre-commit.mjs`. Yang dieksekusi git: shim shell `0755`:
+Git tree sering `0644`, jadi `pasang` tidak andalkan bit `+x`. Yang dieksekusi git: shim shell `0755`:
 
 ```sh
 root="$(git rev-parse --show-toplevel)" || exit 2
-exec node "$root/.githooks/pre-commit.mjs"
+if [ -f "$root/han.sip/cli.mjs" ]; then
+  exec node "$root/han.sip/cli.mjs" --staged --quiet
+fi
+exec npx --yes github:ganezha/kotak-kecil -- --staged --quiet
 ```
 
-`--check` memastikan file hook ada dan mengandung marker itu.
+`--check` memastikan file hook ada dan mengandung marker kita (termasuk hook lama yang menunjuk `.githooks/pre-commit.mjs`).
 
-Hook sendiri: pakai `han.sip/cli.mjs --staged --quiet` kalau ada di repo; kalau tidak, `npx --yes github:ganezha/kotak-kecil -- --staged --quiet`.
+`han.sip pasang` (atau `node han.sip/pasang.mjs`) jalan di repo **mana pun**. Tidak perlu menyalin `.githooks`.
+
+npx memakai symlink `.bin/han.sip` → `cli.mjs`. `main()` membandingkan `realpath(argv[1])` dengan `import.meta.url` supaya shim itu tidak diam.
 
 ## Batas yang disengaja
 

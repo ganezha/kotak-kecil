@@ -4,6 +4,44 @@ Kotak perkakas MIT milik [Ganezha](https://github.com/ganezha). Satu tool, satu 
 
 A public toolbox. Small tools, one job each.
 
+## Pakai han.sip sekarang
+
+Di repo kamu, tanpa clone:
+
+```bash
+npx --yes github:ganezha/kotak-kecil -- .
+```
+
+```text
+han.sip
+ronda: 12 file
+sip.
+```
+
+Kalau bukan sip:
+
+```text
+! env-file         .env
+! github-token     src/config.js:14
+
+bukan sip. 2 temuan.
+Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
+```
+
+Isi secret **tidak dicetak**. `0` sip · `1` temuan · `2` gagal.
+
+```bash
+npx --yes github:ganezha/kotak-kecil -- --help
+npx --yes github:ganezha/kotak-kecil -- --staged
+npx --yes github:ganezha/kotak-kecil -- pasang
+```
+
+CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml).
+
+Pin: `npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .`
+
+Belum npm registry.
+
 ## Tools
 
 ### [`han.sip`](han.sip/cli.mjs)
@@ -17,20 +55,16 @@ node han.sip/cli.mjs --diff      # baris baru vs HEAD
 node han.sip/cli.mjs --json
 node han.sip/cli.mjs --sarif     # GitHub code scanning
 node han.sip/cli.mjs --baseline  # temuan lama tidak gagal
-node han.sip/pasang.mjs          # pre-commit di repo ini (manual)
+node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 
-`0` = sip. `1` = bukan sip. `--quiet` diam kalau sip. `--ignore <pola>` dan `.han.sipignore` skip path. `--write-baseline` menulis fingerprint, bukan secret.
-
-Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall` — itu nulis `.git` tiap install.
-
-Belum terbit npm. Kalau nanti terbit: pasang tetap perintah di atas.
+`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
 
 ```bash
-npm test                       # fixture .env, staged vs unstaged, token palsu
+npm test
 ```
 
-Desain: [docs/han.sip.md](docs/han.sip.md). Contoh: [docs/EXAMPLES.md](docs/EXAMPLES.md).
+Desain: [docs/han.sip.md](docs/han.sip.md). Contoh: [docs/EXAMPLES.md](docs/EXAMPLES.md). Pasang: [docs/INSTALL.md](docs/INSTALL.md).
 
 ### [`jejak`](jejak/cli.mjs)
 

@@ -5,7 +5,7 @@
  * Never prints the secret itself — only path, line, and kind.
  */
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -18,6 +18,7 @@ import {
   toSarif,
   writeBaseline,
 } from "./lapor.mjs";
+import { pasang } from "./pasang.mjs";
 import {
   loadIgnoreFile,
   scanDiff,
@@ -31,7 +32,7 @@ const VERSION = JSON.parse(
 ).version;
 
 function help() {
-  console.log(`han.sip — ronda malam untuk git
+  console.log(`han.sip ${VERSION} — ronda malam untuk git
 
 Usage:
   han.sip [folder]              ronda folder (default .)
@@ -43,9 +44,13 @@ Usage:
   han.sip --ignore <pola>       skip path (bisa diulang)
   han.sip --baseline [file]     temuan lama tidak gagal
   han.sip --write-baseline [file]  tulis fingerprint (bukan secret)
+  han.sip pasang                pre-commit di repo git ini
+  han.sip pasang --check
+
+npx --yes github:ganezha/kotak-kecil -- .
+npx --yes github:ganezha/kotak-kecil -- pasang
 
 .han.sipignore di root repo ikut dibaca. Pola: * dan **.
-
 --staged --diff = hanya baris baru di index.
 
 Exit:
@@ -76,10 +81,15 @@ export function parseArgs(argv) {
   let diffRef = "HEAD";
   let baseline = null;
   let write = null;
+  let check = false;
 
   for (let i = 0; i < rest.length; i += 1) {
     const a = rest[i];
     if (a === "-h" || a === "--help") return { help: true };
+    if (a === "--check") {
+      check = true;
+      continue;
+    }
     if (a === "--staged") {
       staged = true;
       continue;
@@ -122,13 +132,22 @@ export function parseArgs(argv) {
       i = t.i;
       continue;
     }
+    if (a === "--") continue;
     if (a.startsWith("-")) throw new Error(`flag tidak dikenal: ${a}`);
     positional.push(a);
   }
 
   if (json && sarif) throw new Error("pilih --json atau --sarif");
+  if (positional[0] === "pasang") {
+    if (check && positional.length > 1) {
+      /* ok */
+    }
+    return { help: false, command: "pasang", check };
+  }
+  if (check) throw new Error("--check hanya untuk pasang");
   return {
     help: false,
+    command: "ronda",
     staged,
     quiet,
     json,
@@ -159,6 +178,10 @@ async function main() {
   if (opts.help) {
     help();
     process.exit(0);
+  }
+  if (opts.command === "pasang") {
+    await pasang({ check: opts.check });
+    return;
   }
 
   const folder = path.resolve(opts.folder);
@@ -267,7 +290,26 @@ async function main() {
   process.exit(printHuman(payload));
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+function isCliEntry() {
+  const arg = process.argv[1];
+  if (!arg) return false;
+  let resolved = arg;
+  try {
+    resolved = realpathSync(arg);
+  } catch {
+    /* npm bin is often a symlink */
+  }
+  try {
+    return (
+      import.meta.url === pathToFileURL(resolved).href ||
+      import.meta.url === pathToFileURL(arg).href
+    );
+  } catch {
+    return false;
+  }
+}
+
+if (isCliEntry()) {
   main().catch((err) => {
     console.error("han.sip gagal:", err.message);
     process.exit(2);

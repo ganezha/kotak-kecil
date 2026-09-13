@@ -1,6 +1,6 @@
 # Versioning
 
-Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.2.0`.
+Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.3.0`.
 
 Ikut [SemVer](https://semver.org/). Di **0.x**, minor boleh breaking. Major `1.0.0` = janji stabil + (mungkin) npm.
 
@@ -22,9 +22,9 @@ Detector baru = minor, bukan patch: CI yang kemarin hijau bisa jadi `bukan sip`.
 Tag git = `v` + angka `package.json`.
 
 ```text
-package.json  0.2.0
-git tag       v0.2.0
-GitHub Release v0.2.0
+package.json  0.3.0
+git tag       v0.3.0
+GitHub Release v0.3.0
 ```
 
 Jangan tag kalau angka di `package.json` belum diganti.
