@@ -1,3 +1,0 @@
-#!/bin/sh
-# Copy to .git/hooks/pre-commit and: chmod +x .git/hooks/pre-commit
-exec npx --yes github:ganezha/kotak-kecil -- --staged
