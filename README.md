@@ -12,13 +12,13 @@ Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau a
 
 ```bash
 node han.sip/cli.mjs .           # seluruh folder (CI)
-node han.sip/cli.mjs --staged    # git index (pre-commit)
-npx --yes github:ganezha/kotak-kecil -- --staged
+node han.sip/cli.mjs --staged    # git index
+node han.sip/pasang.mjs          # pre-commit di repo ini
 ```
 
-`0` = sip. `1` = bukan sip.
+`0` = sip. `1` = bukan sip. `--quiet` diam kalau sip.
 
-Pasang sebagai pre-commit: salin [`han.sip/pre-commit.sample`](han.sip/pre-commit.sample) ke `.git/hooks/pre-commit`.
+Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global.
 
 ### [`gitignore/node.gitignore`](gitignore/node.gitignore)
 
