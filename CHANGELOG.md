@@ -7,6 +7,15 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+### Changed
+
+- README/INSTALL/EXAMPLES: tabel hasil (`sip.` / `! jenis lokasi` / exit 2), Node 18+, jangan `npm i han.sip`.
+- Dump `--help` di EXAMPLES dihapus — ikut CLI, jangan dihafal.
+
+### Fixed
+
+- Tag `v0.0.1`, `v0.1.0`, `v0.1.1` supaya tautan compare di bawah ini tidak 404.
+
 ## [0.3.0] — 2026-09-14
 
 ### Added

@@ -6,17 +6,27 @@ A public toolbox. Small tools, one job each.
 
 ## Pakai han.sip sekarang
 
-Di repo kamu, tanpa clone:
+Node **18+**. Di repo kamu, tanpa clone, tanpa `npm i`:
 
 ```bash
 npx --yes github:ganezha/kotak-kecil -- .
 ```
+
+`--` memisahkan npm dari han.sip. Pakai kalau kamu kirim flag (`--staged`, `--help`, `--json`).
 
 ```text
 han.sip
 ronda: 12 file
 sip.
 ```
+
+**Hasil**
+
+| yang muncul | arti |
+|---|---|
+| `sip.` | bersih. tidak ada secret. exit **0** |
+| `! jenis  lokasi` | temuan. kiri = jenis, kanan = path[:baris]. **bukan** nilai token. exit **1** |
+| `han.sip gagal: …` | tool tidak jalan. **bukan** “aman”. exit **2** |
 
 Kalau bukan sip:
 
@@ -28,7 +38,7 @@ bukan sip. 2 temuan.
 Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
 ```
 
-Isi secret **tidak dicetak**. `0` sip · `1` temuan · `2` gagal.
+Hapus file tidak cukup. Token yang sempat masuk git harus di-rotate.
 
 ```bash
 npx --yes github:ganezha/kotak-kecil -- --help
@@ -36,11 +46,11 @@ npx --yes github:ganezha/kotak-kecil -- --staged
 npx --yes github:ganezha/kotak-kecil -- pasang
 ```
 
-CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml).
+CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`.
 
-Pin: `npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .`
+Pin rilis: `npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .`
 
-Belum npm registry.
+Belum npm registry. **Jangan** `npm i han.sip`.
 
 ## Tools
 
