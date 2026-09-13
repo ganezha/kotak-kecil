@@ -26,6 +26,15 @@ Belum terbit npm. Kalau nanti terbit: pasang tetap perintah di atas.
 npm test                       # fixture .env, staged vs unstaged, token palsu
 ```
 
+### [`jejak`](jejak/cli.mjs)
+
+Commit per hari. Graph baru hidup di hari ke-2.
+
+```bash
+node jejak/cli.mjs        # 14 hari
+node jejak/cli.mjs 30
+```
+
 ### [`gitignore/node.gitignore`](gitignore/node.gitignore)
 
 Strict gitignore for Node.js so `.env`, private keys, and dumps never reach GitHub.
@@ -40,7 +49,7 @@ Kerangka `.env` kosong. Salin, isi lokal, file aslinya tidak masuk git.
 
 ## —
 
-Kalau sudah siap, file baru muncul di sini.
+Tool berikutnya: file dulu, bukan README.
 
 ## Principles
 

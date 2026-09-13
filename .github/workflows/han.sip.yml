@@ -17,3 +17,5 @@ jobs:
         run: node --test tes/*.test.mjs
       - name: ronda malam
         run: node han.sip/cli.mjs .
+      - name: jejak
+        run: node jejak/cli.mjs

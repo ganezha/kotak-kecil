@@ -9,6 +9,7 @@
   },
   "files": [
     "han.sip/",
+    "jejak/",
     ".githooks/",
     "gitignore/",
     "templates/"
@@ -22,6 +23,7 @@
     "han.sip": "node han.sip/cli.mjs .",
     "han.sip:staged": "node han.sip/cli.mjs --staged",
     "han.sip:pasang": "node han.sip/pasang.mjs",
+    "jejak": "node jejak/cli.mjs",
     "test": "node --test tes/*.test.mjs"
   }
 }
