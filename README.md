@@ -4,8 +4,6 @@ Kotak perkakas MIT milik [Ganezha](https://github.com/ganezha). Satu tool, satu 
 
 A public toolbox. Small tools, one job each.
 
-Alur kerja: **[WORKFLOW.md](WORKFLOW.md)** — tiga loop, kamu di tahap 03 (pakai sendiri).
-
 ## Tools
 
 ### [`han.sip`](han.sip/cli.mjs)
@@ -33,6 +31,10 @@ curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/
 ### [`templates/env.example`](templates/env.example)
 
 Kerangka `.env` kosong. Salin, isi lokal, file aslinya tidak masuk git.
+
+## —
+
+Kalau sudah siap, file baru muncul di sini.
 
 ## Principles
 
