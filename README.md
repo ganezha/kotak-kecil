@@ -4,6 +4,8 @@ Kotak perkakas MIT milik [Ganezha](https://github.com/ganezha). Satu tool, satu 
 
 A public toolbox. Small tools, one job each.
 
+Alur kerja: **[WORKFLOW.md](WORKFLOW.md)** — tiga loop, kamu di tahap 03 (pakai sendiri).
+
 ## Tools
 
 ### [`han.sip`](han.sip/cli.mjs)
