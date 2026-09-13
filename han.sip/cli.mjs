@@ -132,6 +132,7 @@ export function parseArgs(argv) {
       i = t.i;
       continue;
     }
+    if (a === "--") continue;
     if (a.startsWith("-")) throw new Error(`flag tidak dikenal: ${a}`);
     positional.push(a);
   }

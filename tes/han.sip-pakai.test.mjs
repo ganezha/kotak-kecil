@@ -61,6 +61,9 @@ test("parseArgs: flag baru", () => {
   const p = parseArgs(["node", "han.sip", "pasang", "--check"]);
   assert.equal(p.command, "pasang");
   assert.equal(p.check, true);
+  const d = parseArgs(["node", "han.sip", "--", "--json", "."]);
+  assert.equal(d.json, true);
+  assert.equal(d.folder, ".");
 });
 
 test("matchGlob: * ** dan nama tanpa slash", () => {
