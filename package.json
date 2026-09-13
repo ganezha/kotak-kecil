@@ -1,6 +1,6 @@
 {
   "name": "han.sip",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ronda malam untuk git. Teriak pelan kalau ada secret.",
   "type": "module",
   "bin": {
@@ -17,6 +17,7 @@
     "url": "git+https://github.com/ganezha/kotak-kecil.git"
   },
   "scripts": {
-    "han.sip": "node han.sip/cli.mjs ."
+    "han.sip": "node han.sip/cli.mjs .",
+    "han.sip:staged": "node han.sip/cli.mjs --staged"
   }
 }
