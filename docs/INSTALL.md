@@ -15,7 +15,7 @@ npx --yes github:ganezha/kotak-kecil -- .
 Pin rilis:
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
 ```
 
 `--` memisahkan npm dari han.sip. Pakai di depan flag.

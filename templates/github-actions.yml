@@ -1,6 +1,6 @@
 # Salin ke .github/workflows/han.sip.yml di repo kamu.
 # Pin opsional: ganti github:ganezha/kotak-kecil menjadi
-# github:ganezha/kotak-kecil#v0.3.0
+# github:ganezha/kotak-kecil#v0.4.0
 name: han.sip
 
 on:

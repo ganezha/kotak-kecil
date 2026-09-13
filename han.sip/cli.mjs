@@ -42,8 +42,8 @@ Usage:
   han.sip --json                keluar JSON
   han.sip --sarif               keluar SARIF 2.1.0
   han.sip --ignore <pola>       skip path (bisa diulang)
-  han.sip --baseline [file]     temuan lama tidak gagal
-  han.sip --write-baseline [file]  tulis fingerprint (bukan secret)
+  han.sip --baseline [file]     temuan diterima/di-suppress — bukan aman
+  han.sip --write-baseline [file]  tulis fingerprint turunan (bukan plaintext)
   han.sip pasang                pre-commit di repo git ini
   han.sip pasang --check
 
@@ -281,7 +281,7 @@ async function main() {
     if (!opts.quiet) {
       console.log("han.sip");
       console.log(
-        `baseline: ${opts.writeBaseline} (${allHits.length} temuan).`,
+        `baseline: ${opts.writeBaseline} (${allHits.length} temuan). Diterima, bukan aman.`,
       );
     }
     process.exit(0);

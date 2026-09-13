@@ -54,9 +54,9 @@ Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` ata
 
 `CONTENT_RULES` — regex di baris. Ambang panjang sengaja tinggi supaya `ghp_short` tidak lolos.
 
-`ALLOW_FILE`: hanya `.env.example`. Isi contoh di situ tidak ditangkap. Jangan taruh nilai hidup di `.env.example`.
+`.env.example`: nama file **bukan** temuan `env-file`. Isi **tetap** dironda. `API_KEY=` lolos. `ghp_…` di file itu = temuan. Model: [SECURITY.md](../SECURITY.md).
 
-Hit unik: fingerprint `sha256(kind + file + potongan cocok)` 16 hex. Nilai secret di-hash, tidak disimpan, tidak dicetak.
+Hit unik: fingerprint turunan `sha256(kind || NUL || posix(file) || NUL || potongan cocok)` 16 hex. Potongan itu material yang cocok rule (bisa secret). Hash satu arah, tidak disimpan sebagai plaintext, tidak dicetak, tidak bisa dikembalikan ke nilai. Bukan credential — tetap bukti bahwa string berbentuk secret ada di path itu.
 
 ## Ignore
 
@@ -64,9 +64,13 @@ Hit unik: fingerprint `sha256(kind + file + potongan cocok)` 16 hex. Nilai secre
 
 ## Baseline
 
-Repo lama yang sudah kena temuan tidak bisa memakai tool kalau setiap CI merah. `--write-baseline [file]` (default `.han.sip-baseline.json`) menulis `{ version, hits: [{ file, kind, fp }] }`. `--baseline` membuang hit yang `fp`-nya sudah ada: exit 0 kalau sisanya kosong. Temuan baru tetap `1`.
+Repo lama yang sudah kena temuan tidak bisa memakai tool kalau setiap CI merah. Baseline **bukan** stempel aman.
 
-`--write-baseline` tanpa `--baseline` = snapshot, exit 0 meski ada temuan.
+`--write-baseline [file]` (default `.han.sip-baseline.json`) menulis `{ version, note, hits: [{ file, kind, fp }] }`. `note`: diterima/di-suppress, bukan aman. `--baseline` membuang hit yang `fp`-nya sudah ada: exit 0 kalau sisanya kosong. Temuan baru tetap `1`. JSON: `baseline.safe` selalu `false`.
+
+`--write-baseline` tanpa `--baseline` = snapshot, exit 0 meski ada temuan — tetap “diterima, bukan aman”.
+
+Kalau nilai itu sempat masuk git: rotate dulu, baru baseline.
 
 ## Mesin
 

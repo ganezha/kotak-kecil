@@ -67,18 +67,35 @@ test("fixture .env: folder scan teriak env-file, tidak mencetak nilai", async ()
   }
 });
 
-test("fixture .env.example: boleh, sip", async () => {
+test("fixture .env.example kosong: bukan env-file, sip", async () => {
   const dir = await tmpDir();
   try {
-    await writeFile(
-      path.join(dir, ".env.example"),
-      `API_KEY=\nTOKEN=${palsu.github()}\n`,
-    );
+    await writeFile(path.join(dir, ".env.example"), "API_KEY=\nTOKEN=\n# ghp_bukan_token\n");
     const { hits } = await scanFolder(dir);
     assert.deepEqual(hits, []);
     const cli = await runCli(["--quiet", "."], dir);
     assert.equal(cli.code, 0);
     assert.equal(cli.stdout, "");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("fixture .env.example berisi token berbentuk secret: teriak isi, bukan env-file", async () => {
+  const dir = await tmpDir();
+  try {
+    const token = palsu.github();
+    await writeFile(path.join(dir, ".env.example"), `API_KEY=\nTOKEN=${token}\n`);
+    const { hits } = await scanFolder(dir);
+    assert.equal(hits.some((h) => h.kind === "env-file"), false);
+    assert.equal(
+      hits.some((h) => h.kind === "github-token" && h.file === ".env.example"),
+      true,
+    );
+    const cli = await runCli(["."], dir);
+    assert.equal(cli.code, 1);
+    assert.match(cli.stdout, /github-token/);
+    assert.equal(cli.stdout.includes(token), false);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
