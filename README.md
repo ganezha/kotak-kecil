@@ -13,10 +13,14 @@ Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau a
 ```bash
 node han.sip/cli.mjs .           # seluruh folder (CI)
 node han.sip/cli.mjs --staged    # git index
+node han.sip/cli.mjs --diff      # baris baru vs HEAD
+node han.sip/cli.mjs --json
+node han.sip/cli.mjs --sarif     # GitHub code scanning
+node han.sip/cli.mjs --baseline  # temuan lama tidak gagal
 node han.sip/pasang.mjs          # pre-commit di repo ini (manual)
 ```
 
-`0` = sip. `1` = bukan sip. `--quiet` diam kalau sip.
+`0` = sip. `1` = bukan sip. `--quiet` diam kalau sip. `--ignore <pola>` dan `.han.sipignore` skip path. `--write-baseline` menulis fingerprint, bukan secret.
 
 Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall` — itu nulis `.git` tiap install.
 

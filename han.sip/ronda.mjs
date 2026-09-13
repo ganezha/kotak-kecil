@@ -1,8 +1,9 @@
 /**
  * Inti ronda: aturan file + isi. Tidak mencetak secret.
- * cli.mjs yang bicara ke manusia.
+ * cli.mjs yang bicara ke manusia / mesin.
  */
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -68,6 +69,94 @@ export const CONTENT_RULES = [
 
 export const ALLOW_FILE = (name) => name === ".env.example";
 
+export const IGNORE_FILE = ".han.sipignore";
+
+export function posixPath(p) {
+  return String(p).split(path.sep).join("/");
+}
+
+export function fingerprint(kind, file, piece = "") {
+  const h = createHash("sha256");
+  h.update(kind);
+  h.update("\0");
+  h.update(posixPath(file));
+  h.update("\0");
+  h.update(piece);
+  return h.digest("hex").slice(0, 16);
+}
+
+function pushHit(hits, file, line, kind, piece = "") {
+  hits.push({
+    file,
+    line,
+    kind,
+    fp: fingerprint(kind, file, piece),
+  });
+}
+
+function globRe(pattern) {
+  let out = "^";
+  let i = 0;
+  while (i < pattern.length) {
+    if (pattern.startsWith("**/", i)) {
+      out += "(?:.*/)?";
+      i += 3;
+      continue;
+    }
+    if (pattern.startsWith("**", i)) {
+      out += ".*";
+      i += 2;
+      continue;
+    }
+    const ch = pattern[i];
+    if (ch === "*") out += "[^/]*";
+    else if (ch === "?") out += "[^/]";
+    else if ("\\.[]{}()+-^$|".includes(ch)) out += `\\${ch}`;
+    else out += ch;
+    i += 1;
+  }
+  return new RegExp(`${out}$`);
+}
+
+/** gitignore-lite. Pola tanpa `/` mencocok nama file di path mana pun. */
+export function matchGlob(rel, pattern) {
+  const s = posixPath(rel).replace(/^\.\//, "");
+  let p = posixPath(pattern).replace(/^\.\//, "").replace(/^\/+/, "");
+  if (!p) return false;
+  const dirOnly = p.endsWith("/");
+  if (dirOnly) p = p.slice(0, -1);
+  if (dirOnly) return s === p || s.startsWith(`${p}/`);
+  if (globRe(p).test(s)) return true;
+  if (!p.includes("/")) {
+    const base = s.slice(s.lastIndexOf("/") + 1);
+    if (globRe(p).test(base)) return true;
+    if (globRe(`**/${p}`).test(s)) return true;
+  }
+  return false;
+}
+
+export function parseIgnore(text) {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"));
+}
+
+export function isIgnored(rel, patterns) {
+  if (!patterns?.length) return false;
+  return patterns.some((p) => matchGlob(rel, p));
+}
+
+export async function loadIgnoreFile(root) {
+  try {
+    const text = await readFile(path.join(root, IGNORE_FILE), "utf8");
+    return parseIgnore(text);
+  } catch (err) {
+    if (err && err.code === "ENOENT") return [];
+    throw err;
+  }
+}
+
 export async function walk(dir, files) {
   let entries;
   try {
@@ -115,29 +204,45 @@ export async function readStaged(root, relPath) {
   return stdout;
 }
 
-export function scanText(relFile, text, hits) {
+export function scanName(relFile, hits) {
   const name = path.basename(relFile);
   if (ALLOW_FILE(name)) return;
   for (const rule of FILE_RULES) {
-    if (rule.test(name)) hits.push({ file: relFile, line: 0, kind: rule.kind });
+    if (rule.test(name)) pushHit(hits, relFile, 0, rule.kind);
   }
+}
+
+export function scanContent(relFile, text, hits) {
   if (text == null) return;
   if (text.includes("\u0000")) return;
+  const name = path.basename(relFile);
+  if (ALLOW_FILE(name)) return;
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
-    for (const rule of CONTENT_RULES) {
-      if (rule.re.test(lines[i])) {
-        hits.push({ file: relFile, line: i + 1, kind: rule.kind });
-      }
-    }
+    scanLine(relFile, i + 1, lines[i], hits);
   }
+}
+
+export function scanLine(relFile, line, text, hits) {
+  if (text == null || text.includes("\u0000")) return;
+  const name = path.basename(relFile);
+  if (ALLOW_FILE(name)) return;
+  for (const rule of CONTENT_RULES) {
+    const m = rule.re.exec(text);
+    if (m) pushHit(hits, relFile, line, rule.kind, m[0]);
+  }
+}
+
+export function scanText(relFile, text, hits) {
+  scanName(relFile, hits);
+  scanContent(relFile, text, hits);
 }
 
 export function uniqueHits(hits) {
   const out = [];
   const seen = new Set();
   for (const hit of hits) {
-    const key = `${hit.file}:${hit.line}:${hit.kind}`;
+    const key = hit.fp || `${hit.file}:${hit.line}:${hit.kind}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(hit);
@@ -145,17 +250,18 @@ export function uniqueHits(hits) {
   return out;
 }
 
-export async function scanFolder(root) {
+export async function scanFolder(root, { ignore = [] } = {}) {
   const files = [];
   await walk(root, files);
   const hits = [];
+  let count = 0;
   for (const file of files) {
+    const shown = path.relative(root, file) || file;
+    if (isIgnored(shown, ignore)) continue;
+    count += 1;
     const name = path.basename(file);
     if (ALLOW_FILE(name)) continue;
-    const shown = path.relative(root, file) || file;
-    for (const rule of FILE_RULES) {
-      if (rule.test(name)) hits.push({ file: shown, line: 0, kind: rule.kind });
-    }
+    scanName(shown, hits);
     let info;
     try {
       info = await stat(file);
@@ -169,23 +275,22 @@ export async function scanFolder(root) {
     } catch {
       continue;
     }
-    scanText(shown, text.includes("\u0000") ? "\u0000" : text, hits);
+    scanContent(shown, text.includes("\u0000") ? "\u0000" : text, hits);
   }
-  return { count: files.length, hits: uniqueHits(hits) };
+  return { count, hits: uniqueHits(hits) };
 }
 
-export async function scanStaged(root) {
+export async function scanStaged(root, { ignore = [] } = {}) {
   const rels = await listStaged(root);
   const hits = [];
   let count = 0;
   for (const relFile of rels) {
     const name = path.basename(relFile);
     if (SKIP_EXT.has(path.extname(name).toLowerCase())) continue;
+    if (isIgnored(relFile, ignore)) continue;
     count += 1;
     if (ALLOW_FILE(name)) continue;
-    for (const rule of FILE_RULES) {
-      if (rule.test(name)) hits.push({ file: relFile, line: 0, kind: rule.kind });
-    }
+    scanName(relFile, hits);
     let buf;
     try {
       buf = await readStaged(root, relFile);
@@ -194,7 +299,105 @@ export async function scanStaged(root) {
     }
     if (!buf.length || buf.length > MAX_BYTES) continue;
     const text = buf.includes(0) ? "\u0000" : buf.toString("utf8");
-    scanText(relFile, text, hits);
+    scanContent(relFile, text, hits);
+  }
+  return { count, hits: uniqueHits(hits) };
+}
+
+function unquoteGitPath(p) {
+  let s = p.trim();
+  if (s.startsWith('"') && s.endsWith('"')) {
+    s = s.slice(1, -1).replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+  }
+  if (s.startsWith("b/")) s = s.slice(2);
+  return s;
+}
+
+/** Parse `git diff -U0`. Hanya baris `+`. */
+export function parseUnifiedDiff(text) {
+  const files = [];
+  let cur = null;
+  let newLine = 0;
+  for (const raw of text.split(/\n/)) {
+    if (raw.startsWith("diff --git ")) {
+      cur = { file: "", added: [], isNew: false };
+      files.push(cur);
+      const mid = raw.lastIndexOf(" b/");
+      if (mid !== -1) cur.file = unquoteGitPath(raw.slice(mid + 1));
+      continue;
+    }
+    if (!cur) continue;
+    if (raw.startsWith("new file ")) cur.isNew = true;
+    if (raw.startsWith("+++ ")) {
+      const p = raw.slice(4).trim();
+      if (p === "/dev/null") {
+        cur.file = "";
+        continue;
+      }
+      cur.file = unquoteGitPath(p);
+      continue;
+    }
+    const hunk = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) {
+      newLine = Number(hunk[1]);
+      continue;
+    }
+    if (raw.startsWith("+") && !raw.startsWith("+++")) {
+      cur.added.push({ line: newLine, text: raw.slice(1) });
+      newLine += 1;
+      continue;
+    }
+  }
+  return files.filter((f) => f.file);
+}
+
+export async function scanDiff(
+  root,
+  { ignore = [], ref = "HEAD", staged = false, pathFilter = "" } = {},
+) {
+  const args = [
+    "diff",
+    "--unified=0",
+    "--no-color",
+    "--no-ext-diff",
+    "--diff-filter=ACMR",
+  ];
+  if (staged) args.push("--cached");
+  args.push(ref);
+  if (pathFilter && pathFilter !== ".") args.push("--", pathFilter);
+
+  let stdout;
+  try {
+    ({ stdout } = await execFileP("git", args, {
+      cwd: root,
+      maxBuffer: 10 * 1024 * 1024,
+    }));
+  } catch (err) {
+    if (err && err.code === "ENOENT") throw new Error("git tidak ada di PATH");
+    const msg = String(err?.stderr || err?.message || "");
+    if (/bad revision|unknown revision|ambiguous argument|Needed a single revision/i.test(msg)) {
+      throw new Error(`ref tidak ada: ${ref}`);
+    }
+    if (/not a git repository/i.test(msg)) {
+      throw new Error("bukan git repo. --diff butuh .git");
+    }
+    throw new Error("bukan git repo. --diff butuh .git");
+  }
+
+  const files = parseUnifiedDiff(stdout);
+  const hits = [];
+  let count = 0;
+  for (const file of files) {
+    const relFile = posixPath(file.file);
+    const name = path.basename(relFile);
+    if (SKIP_EXT.has(path.extname(name).toLowerCase())) continue;
+    if (isIgnored(relFile, ignore)) continue;
+    count += 1;
+    if (ALLOW_FILE(name)) continue;
+    scanName(relFile, hits);
+    for (const row of file.added) {
+      scanLine(relFile, row.line, row.text, hits);
+    }
   }
   return { count, hits: uniqueHits(hits) };
 }

@@ -4,25 +4,28 @@ Satu tugas: temukan file dan string berbentuk secret **sebelum** masuk GitHub. T
 
 Baca [cli.mjs](../han.sip/cli.mjs) dulu. File ini hanya yang tidak kentara dari kode.
 
-## Tiga file
+## Empat file
 
 | File | Urusan |
 |---|---|
-| `han.sip/cli.mjs` | Argumen, laporan ke manusia, exit code |
-| `han.sip/ronda.mjs` | Walk, aturan, baca index |
+| `han.sip/cli.mjs` | Argumen, pilih mode, exit code |
+| `han.sip/ronda.mjs` | Walk, aturan, index, diff, ignore, fingerprint |
+| `han.sip/lapor.mjs` | Manusia, JSON, SARIF, baseline |
 | `han.sip/pasang.mjs` | Shim pre-commit di `.git` repo **ini** |
 
 `.githooks/pre-commit.mjs` ikut di-commit. `.git/hooks/pre-commit` tidak.
 
-## Dua mode baca
+## Tiga mode baca
 
 **Folder** (`han.sip [dir]`): isi *working tree*. Untuk CI.
 
 **Staged** (`--staged`): isi *git index*. `git diff --cached --name-only -z --diff-filter=ACMR`, lalu `git show :path`. Working tree yang sudah diubah sesudah `git add` **tidak** dihitung.
 
-Itu disengaja. Pre-commit menjaga yang akan masuk commit, bukan sampah di disk.
+**Diff** (`--diff [ref]`): hanya baris `+` dari `git diff -U0 --diff-filter=ACMR <ref>`. Default ref `HEAD`. File untracked tidak kelihatan — itu kerjaan folder scan atau `git add` lalu `--staged`. `--staged --diff` = baris baru di index.
 
-Tes yang mengunci ini: `unstaged .env: --staged sip` dan `staged .env: --staged baca index`.
+Itu disengaja. Pre-commit menjaga yang akan masuk commit, bukan sampah di disk. `--diff` biar secret *lama* di file yang kamu sentuh tidak menggagalkan setiap commit.
+
+Tes yang mengunci ini: `unstaged .env: --staged sip`, `staged .env: --staged baca index`, `--diff: hanya baris baru`.
 
 ## Yang tidak dilakukan
 
@@ -53,14 +56,28 @@ Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` ata
 
 `ALLOW_FILE`: hanya `.env.example`. Isi contoh di situ tidak ditangkap. Jangan taruh nilai hidup di `.env.example`.
 
-Hit unik: `file:line:kind`.
+Hit unik: fingerprint `sha256(kind + file + potongan cocok)` 16 hex. Nilai secret di-hash, tidak disimpan, tidak dicetak.
+
+## Ignore
+
+`--ignore <pola>` bisa diulang. Plus file `.han.sipignore` di root git (gitignore-lite: `#`, `*`, `**`, pola tanpa `/` = nama file di path mana pun). Dihitung sebelum baca isi.
+
+## Baseline
+
+Repo lama yang sudah kena temuan tidak bisa memakai tool kalau setiap CI merah. `--write-baseline [file]` (default `.han.sip-baseline.json`) menulis `{ version, hits: [{ file, kind, fp }] }`. `--baseline` membuang hit yang `fp`-nya sudah ada: exit 0 kalau sisanya kosong. Temuan baru tetap `1`.
+
+`--write-baseline` tanpa `--baseline` = snapshot, exit 0 meski ada temuan.
+
+## Mesin
+
+`--json` / `--sarif` ke stdout. `--quiet` tidak menekan JSON/SARIF. Pilih satu. SARIF 2.1.0, `startLine >= 1`, `partialFingerprints["han.sip/v1"]`. Redirect: `han.sip --sarif > han.sip.sarif`.
 
 ## Exit
 
 | Code | Arti |
 |---|---|
 | 0 | sip |
-| 1 | temuan |
+| 1 | temuan baru (bukan yang di baseline) |
 | 2 | tidak bisa ronda (git hilang, bukan repo, I/O) |
 
 Pre-commit **fail closed**: node/git hilang → commit ditolak (`2`), bukan dilepas.

@@ -9,12 +9,14 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ### Added
 
-- `CODE_OF_CONDUCT.md`
-- Template issue (bug, tool baru, lain) dan `PULL_REQUEST_TEMPLATE.md`
-- [docs/INSTALL.md](docs/INSTALL.md) — cara pasang, tanpa npm registry
-- [docs/EXAMPLES.md](docs/EXAMPLES.md) — contoh CLI `han.sip` dan `jejak`
-- [docs/VERSIONING.md](docs/VERSIONING.md) dan [docs/RELEASE.md](docs/RELEASE.md)
-- Catatan desain [docs/han.sip.md](docs/han.sip.md) dan [docs/jejak.md](docs/jejak.md)
+- **han.sip** flags that make the tool usable in a real repo, without new regex:
+  - `--json` — mesin
+  - `--sarif` — SARIF 2.1.0 (GitHub code scanning)
+  - `--diff [ref]` — hanya baris baru vs ref (default `HEAD`); `--staged --diff` = index
+  - `--ignore <pola>` dan `.han.sipignore` (`*`, `**`)
+  - `--baseline [file]` / `--write-baseline [file]` — fingerprint temuan lama, bukan nilai secret
+- `han.sip/lapor.mjs` — manusia / JSON / SARIF / baseline
+- Docs polish (CoC, issue/PR templates, INSTALL, EXAMPLES, VERSIONING, RELEASE, catatan desain)
 
 ## [0.2.0] — 2026-09-13
 
