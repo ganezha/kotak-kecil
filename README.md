@@ -8,12 +8,12 @@ A public toolbox. Small tools, one job each.
 
 ### [`han.sip`](han.sip/cli.mjs)
 
-Ronda malam untuk git. Cek folder sebelum commit. Kalau ada `.env`, key, atau token berbentuk secret — teriak pelan. Isi secret tidak dicetak.
+Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau ada `.env`, key, atau token berbentuk secret — teriak pelan. Isi secret tidak dicetak. Isi yang dibaca untuk `--staged` datang dari git index, bukan working tree.
 
 ```bash
-node han.sip/cli.mjs .
-# or, from any project:
-npx --yes github:ganezha/kotak-kecil
+node han.sip/cli.mjs .           # seluruh folder (CI)
+node han.sip/cli.mjs --staged    # git index (pre-commit)
+npx --yes github:ganezha/kotak-kecil -- --staged
 ```
 
 `0` = sip. `1` = bukan sip.
@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/
 
 ### [`templates/env.example`](templates/env.example)
 
-Kerangka `.env` kosong. Salin, isi lokal, jangan pernah commit file aslinya.
+Kerangka `.env` kosong. Salin, isi lokal, file aslinya tidak masuk git.
 
 ## Principles
 
