@@ -18,7 +18,9 @@ Pin rilis:
 npx --yes github:ganezha/kotak-kecil#v0.3.0 -- .
 ```
 
-`0` = sip. `1` = ada temuan (path + kind, **bukan** nilai secret). `2` = gagal jalan.
+`--` memisahkan npm dari han.sip. Pakai di depan flag.
+
+`0` = `sip.` = bersih. `1` = ada temuan (jenis + lokasi, **bukan** nilai secret). `2` = gagal jalan — **bukan** aman.
 
 ```bash
 npx --yes github:ganezha/kotak-kecil -- --help

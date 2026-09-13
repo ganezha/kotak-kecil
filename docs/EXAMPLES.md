@@ -2,7 +2,7 @@
 
 Salin apa adanya. Output disingkat. Isi secret **tidak pernah** muncul.
 
-Syarat: [INSTALL.md](INSTALL.md).
+Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 
 ## Di repo kamu (tanpa clone)
 
@@ -15,6 +15,21 @@ npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
 npx --yes github:ganezha/kotak-kecil -- pasang
 npx --yes github:ganezha/kotak-kecil#v0.3.0 -- --quiet .
 ```
+
+`--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
+
+## Hasil
+
+```text
+sip.                         bersih. exit 0
+! github-token  src/x.js:4   jenis + lokasi. bukan nilai token. exit 1
+han.sip gagal: bukan git repo
+                             tool tidak jalan. exit 2
+```
+
+`! env-file .env` = file itu tidak boleh masuk git. Bukan “isi `.env` dicetak”.
+
+Kalau ini pernah di-commit: **rotate** token. `git rm` tidak cukup.
 
 ## GitHub Actions
 
@@ -85,29 +100,19 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
+npx --yes github:ganezha/kotak-kecil -- --help
 node han.sip/cli.mjs --help
 ```
 
-```text
-han.sip — ronda malam untuk git
-
-Usage:
-  han.sip [folder]      ronda folder (default .)
-  han.sip --staged      ronda file di git index (pre-commit)
-  han.sip --quiet       diam kalau sip; teriak kalau bukan
-
-Exit:
-  0  sip
-  1  bukan sip (temuan)
-```
+Isi `--help` ikut versi. Jangan menghafal dump di sini.
 
 ### Pasang hook di repo ini
 
 ```bash
-node han.sip/pasang.mjs
+npx --yes github:ganezha/kotak-kecil -- pasang
 # han.sip pasang: pre-commit terpasang.
 
-node han.sip/pasang.mjs --check
+npx --yes github:ganezha/kotak-kecil -- pasang --check
 # han.sip pasang: sip.
 ```
 
@@ -134,6 +139,8 @@ node han.sip/cli.mjs --sarif . > han.sip.sarif
 ```
 
 `--quiet` tetap nulis JSON. Isi secret tidak ada di payload — hanya `file`, `line`, `kind`, `fp`.
+
+`ok: true` = sip. `ok: false` = ada temuan. `hits[].kind` + `hits[].file` — tidak ada nilai token.
 
 ### Ignore
 
