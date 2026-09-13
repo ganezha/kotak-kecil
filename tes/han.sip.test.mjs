@@ -231,3 +231,24 @@ test("bukan secret: string pendek tidak lolos ambang", () => {
   scanText("app.js", 'const a = "ghp_short"\nconst b = "AKIA"\n', hits);
   assert.deepEqual(hits, []);
 });
+
+test("npm lifecycle tidak nulis .git", async () => {
+  const pkg = JSON.parse(await readFile(path.join(ROOT, "package.json"), "utf8"));
+  assert.equal(pkg.private, true);
+  const life = [
+    "prepare",
+    "preinstall",
+    "install",
+    "postinstall",
+    "prepack",
+    "prepublish",
+    "prepublishOnly",
+    "publish",
+  ];
+  for (const name of life) {
+    const script = pkg.scripts?.[name] ?? "";
+    assert.equal(script, "", name);
+    assert.equal(script.includes("pasang"), false, name);
+  }
+  assert.equal(pkg.scripts["han.sip:pasang"], "node han.sip/pasang.mjs");
+});

@@ -6,6 +6,9 @@
  * File di git tree juga sering 0644, jadi kita tidak andalkan bit +x.
  * Yang dipasang: shim 0755 di .git/hooks/pre-commit → node .githooks/pre-commit.mjs
  *
+ * Manual. Jangan ikat ke npm prepare/postinstall — itu nulis .git
+ * setiap npm install (termasuk kalau nanti terbit).
+ *
  * Idempotent. --check untuk verifikasi.
  */
 import { execFile } from "node:child_process";

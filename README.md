@@ -13,12 +13,14 @@ Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau a
 ```bash
 node han.sip/cli.mjs .           # seluruh folder (CI)
 node han.sip/cli.mjs --staged    # git index
-node han.sip/pasang.mjs          # pre-commit di repo ini
+node han.sip/pasang.mjs          # pre-commit di repo ini (manual)
 ```
 
 `0` = sip. `1` = bukan sip. `--quiet` diam kalau sip.
 
-Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global.
+Pasang merakit shim `0755` di `.git/hooks/pre-commit` yang mengeksekusi [`.githooks/pre-commit.mjs`](.githooks/pre-commit.mjs). Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall` — itu nulis `.git` tiap install.
+
+Belum terbit npm. Kalau nanti terbit: pasang tetap perintah di atas.
 
 ```bash
 npm test                       # fixture .env, staged vs unstaged, token palsu
