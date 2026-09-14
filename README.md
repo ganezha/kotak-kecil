@@ -9,7 +9,7 @@ A public toolbox. Small tools, one job each.
 Node **18+**. Di repo kamu, tanpa clone, tanpa `npm i`:
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- .
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- .
 ```
 
 `--` memisahkan npm dari han.sip. Pakai kalau kamu kirim flag (`--staged`, `--help`, `--json`).
@@ -41,9 +41,9 @@ Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
 Hapus file tidak cukup. Token yang sempat masuk git harus di-rotate.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --help
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --staged
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- pasang
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --help
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --staged
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- pasang
 ```
 
 CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin npx dan `uses:` ke commit SHA sudah di template.

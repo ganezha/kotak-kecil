@@ -7,12 +7,15 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-09-14
+
 ### Security
 
 - File `> 512 KiB`: isi di-stream, bukan dilewati. Token di file besar tertangkap.
 - `generic-secret` dengan confidence 0–1 (threshold 0.6). Keyword / JWT / entropy. Bukan dobel named rule.
 - Walk: symlink tidak diikuti (file/dir ke luar repo tidak dibaca).
 - `pasang`: hook asing di-chain (`pre-commit.han.sip-prev`) lalu han.sip. Cadangan `.bak` tetap.
+- npx pin ke `211cc004f3486a602f89cd50e11ffb5f6dad7c8b` (commit #10).
 
 ## [0.6.0] — 2026-09-14
 
@@ -116,7 +119,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...v0.4.0

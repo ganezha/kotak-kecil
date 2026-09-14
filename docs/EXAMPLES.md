@@ -7,12 +7,12 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu (tanpa clone)
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- .
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --staged
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --diff
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --json .
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- pasang
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- .
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --staged
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --diff
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --json .
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- pasang
 ```
 
 `--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
@@ -37,8 +37,8 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --quiet .
-- run: npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --sarif . > han.sip.sarif
+- run: npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --quiet .
+- run: npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
   with:
     sarif_file: han.sip.sarif
@@ -99,7 +99,7 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --help
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --help
 node han.sip/cli.mjs --help
 ```
 
@@ -108,10 +108,10 @@ Isi `--help` ikut versi. Jangan menghafal dump di sini.
 ### Pasang hook di repo ini
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- pasang
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- pasang
 # han.sip pasang: pre-commit terpasang.
 
-npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- pasang --check
+npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- pasang --check
 # han.sip pasang: sip.
 ```
 
