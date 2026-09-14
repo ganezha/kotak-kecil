@@ -11,7 +11,7 @@ Di repo kamu. Pin ke commit SHA (bukan tag yang bisa digeser).
 `npx --yes github:…` di npm 10 sering gagal (`GitFetcher requires an Arborist`). Pakai `npm install`:
 
 ```bash
-npm install github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911
+npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 npx han.sip .
 npx jejak
 ```
@@ -55,14 +55,14 @@ Tidak perlu `npm install`. Skrip di `package.json` hanya pintasan. Tes jalan di 
 Pin SHA, **bukan** `main` (bergerak). **Jangan** `-o .gitignore` — itu menimpa ignore yang sudah ada.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/fa0b9ce08b794cc18f6fabbbcbc20973a3752911/gitignore/node.gitignore -o gitignore.node
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/gitignore/node.gitignore -o gitignore.node
 # gabung manual ke .gitignore kamu
 ```
 
 ## Kerangka `.env`
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/fa0b9ce08b794cc18f6fabbbcbc20973a3752911/templates/env.example -o env.example.kotak
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/templates/env.example -o env.example.kotak
 cp env.example.kotak .env.example
 cp .env.example .env
 # isi .env lokal. jangan git add .env

@@ -11,7 +11,7 @@ Repo ini **kotak-kecil**. Paket npm (belum registry) bernama `"han.sip"` — itu
 Node **18+** (CI menguji 18 / 20 / 22). Di repo kamu. `npx github:…` di npm 10 sering gagal (`GitFetcher`); pasang lewat git SHA:
 
 ```bash
-npm install github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911
+npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 npx han.sip .
 npx jejak
 ```
@@ -100,7 +100,7 @@ Strict gitignore for Node.js so `.env`, private keys, and dumps never reach GitH
 Pin ke commit SHA, **bukan** `main`. **Jangan** `-o .gitignore` kalau file itu sudah ada (menimpa).
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/fa0b9ce08b794cc18f6fabbbcbc20973a3752911/gitignore/node.gitignore -o gitignore.node
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/gitignore/node.gitignore -o gitignore.node
 # gabung manual ke .gitignore kamu
 ```
 

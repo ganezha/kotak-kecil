@@ -145,8 +145,8 @@ if [ -x "$root/node_modules/.bin/han.sip" ]; then
   exec "$root/node_modules/.bin/han.sip" --staged --quiet
 fi
 echo "han.sip: tidak ada cli lokal atau node_modules/.bin/han.sip" >&2
-echo "han.sip: pasang lewat: npm install github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911" >&2
-exec npx --yes github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911 -- --staged --quiet
+echo "han.sip: pasang lewat: npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669" >&2
+exec npx --yes github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669 -- --staged --quiet
 ```
 
 Pin = commit SHA 40 hex (`PIN_SHA` di `pasang.mjs`), bukan tag `#v`. Tag bisa digeser.

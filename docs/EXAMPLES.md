@@ -7,7 +7,7 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu
 
 ```bash
-npm install github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911
+npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 npx han.sip .
 npx han.sip --staged
 npx han.sip --diff
@@ -37,7 +37,7 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npm install github:ganezha/kotak-kecil#fa0b9ce08b794cc18f6fabbbcbc20973a3752911
+- run: npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 - run: npx han.sip --quiet .
 - run: npx han.sip --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
@@ -240,8 +240,8 @@ Rentang: 1–366. `node jejak/cli.mjs 0` gagal.
 Pin SHA, bukan `main`. Jangan `-o .gitignore` (menimpa).
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/fa0b9ce08b794cc18f6fabbbcbc20973a3752911/gitignore/node.gitignore -o gitignore.node
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/fa0b9ce08b794cc18f6fabbbcbc20973a3752911/templates/env.example -o env.example.kotak
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/gitignore/node.gitignore -o gitignore.node
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/templates/env.example -o env.example.kotak
 cp env.example.kotak .env.example
 cp .env.example .env
 ```
