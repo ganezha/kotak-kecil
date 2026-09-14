@@ -50,8 +50,9 @@ Usage:
   han.sip pasang                pre-commit di repo git ini
   han.sip pasang --check
 
-npx --yes ${NPX} -- .
-npx --yes ${NPX} -- pasang
+npm install ${NPX}
+npx han.sip .
+npx han.sip pasang
 
 .han.sipignore di root repo ikut dibaca. Pola: * dan **.
 .han.sip/plugins/*.mjs auto. --plugin menambah.

@@ -7,6 +7,11 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+### Fixed
+
+- Instalasi: `npm install github:…#SHA` lalu `npx han.sip`. `npx github:` di npm 10 gagal GitFetcher.
+- Hook: pakai `node_modules/.bin/han.sip` sebelum fallback `npx github:`.
+
 ## [0.8.0] — 2026-09-14
 
 ### Security

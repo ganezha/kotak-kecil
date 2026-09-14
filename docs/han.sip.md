@@ -131,6 +131,9 @@ fi
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
+if [ -x "$root/node_modules/.bin/han.sip" ]; then
+  exec "$root/node_modules/.bin/han.sip" --staged --quiet
+fi
 exec npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --staged --quiet
 ```
 

@@ -1,6 +1,7 @@
 # Salin ke .github/workflows/han.sip.yml di repo kamu.
-# Pin npx ke commit SHA (bukan tag yang bisa digeser).
+# Pin ke commit SHA (bukan tag yang bisa digeser).
 # Pin actions ke commit SHA. Komentar = versi yang di-pin.
+# npm install github:… — jangan `npx github:` (npm 10 GitFetcher).
 name: han.sip
 
 on:
@@ -21,12 +22,15 @@ jobs:
         with:
           node-version: "22"
 
+      - name: pasang han.sip
+        run: npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+
       - name: ronda malam
-        run: npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --quiet .
+        run: npx han.sip --quiet .
 
       - name: SARIF
         if: always()
-        run: npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --sarif . > han.sip.sarif
+        run: npx han.sip --sarif . > han.sip.sarif
 
       - name: upload SARIF
         if: always()

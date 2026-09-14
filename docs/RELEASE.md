@@ -30,7 +30,7 @@ Belum npm. `private: true` itu disengaja. Distribusi = `npx github:ganezha/kotak
    Body = isi seksi changelog versi itu, bukan esai.
    Kalau *immutable releases* aktif: publish setelah draft siap. Tag dan aset terkunci.
 5. Jangan `npm publish` selama `"private": true`.
-6. Cek dari repo **lain**: `npx --yes github:ganezha/kotak-kecil#<PIN_SHA> -- --help` harus mencetak usage.
+6. Cek dari repo **lain**: `npm install github:ganezha/kotak-kecil#<PIN_SHA>` lalu `npx han.sip --help` harus mencetak usage. Jangan andalkan `npx github:` di npm 10 (GitFetcher).
 7. Set `PIN_SHA` di `han.sip/pasang.mjs` ke commit yang berisi kode rilis (bukan tag). Tag `vX.Y.Z` untuk manusia; npx yang dieksekusi = SHA.
 
 ## Immutable
