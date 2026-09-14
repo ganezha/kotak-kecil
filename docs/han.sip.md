@@ -48,11 +48,19 @@ Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` ata
 `FILE_RULES` — nama:
 
 - `.env` dan `.env.*`
-- `*.pem` `*.key` `*.p12` `*.pfx`
+- `*.p12` `*.pfx`
 - `private.txt`
 - `id_rsa` `id_dsa` `id_ecdsa` `id_ed25519`
 
-`CONTENT_RULES` — regex di baris. Ambang panjang sengaja tinggi supaya `ghp_short` tidak lolos.
+`*.pem` / `*.key`: nama = sinyal lemah. Temuan `key-file` hanya kalau file kosong atau tidak terbaca. Isi `BEGIN … PRIVATE KEY` tertangkap `private-key`, bukan dobel. `BEGIN CERTIFICATE` (fullchain.pem, cert.pem) bukan temuan.
+
+`CONTENT_RULES` — regex di baris. Ambang panjang sengaja tinggi supaya `ghp_short` tidak lolos. Span yang sudah tertangkap aturan lain dilewati (mis. `sk-ant-` = Anthropic, bukan OpenAI).
+
+OpenAI: `sk-` + 20+ (klasik, `sk-proj-`, `sk-svcacct-`). Bukan hanya proj/svcacct.
+
+AWS secret: 40 karakter `[A-Za-z0-9/+=]`, hanya di baris dekat `AKIA` / `AWS_SECRET` / `aws_secret_access_key`. Bukan entropy buta di seluruh file.
+
+Seed phrase: 12 atau 24 kata Latin lowercase dipisah spasi, plus konteks `seed` / `mnemonic` / `recovery` / `wallet` di baris itu atau tetangga. Tanpa konteks tidak teriak (README).
 
 `.env.example`: nama file **bukan** temuan `env-file`. Isi **tetap** dironda. `API_KEY=` lolos. `ghp_…` di file itu = temuan. Model: [SECURITY.md](../SECURITY.md).
 

@@ -176,11 +176,11 @@ Gabung: `--baseline --write-baseline` menulis set *sekarang* (refresh), lalu exi
 
 ### Yang ditangkap (bentuk, bukan nilai)
 
-File: `.env`, `.env.*` kecuali nama `.env.example`, `*.pem` `*.key` `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk.
+File: `.env`, `.env.*` kecuali nama `.env.example`, `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk. `*.pem` `*.key` hanya kalau private key / kosong / tidak terbaca — sertifikat publik (`fullchain.pem`, `cert.pem`) bukan temuan.
 
 `.env.example` tidak dihitung `env-file`. **Isinya tetap dironda.** `API_KEY=` lolos. Token berbentuk secret di situ tidak.
 
-Isi: private key PEM, `ghp_` / `github_pat_`, token Telegram, `AKIA…`, Slack `xox*`, Stripe, OpenAI, Anthropic, Google `AIza`, `npm_`, GitLab `glpat-`, Hugging Face `hf_`.
+Isi: private key PEM, `ghp_` / `github_pat_`, token Telegram, `AKIA…` + secret 40 karakter dekatnya, Slack `xox*`, Stripe, OpenAI `sk-` (klasik, proj, svcacct), Anthropic `sk-ant-`, Google `AIza`, `npm_`, GitLab `glpat-`, Hugging Face `hf_`, seed phrase 12/24 kata plus konteks (`seed` / `mnemonic` / `recovery` / `wallet`).
 
 Lihat aturan persis di [han.sip.md](han.sip.md).
 

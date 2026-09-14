@@ -10,6 +10,10 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 ### Security
 
 - `pasang` dan template Actions pin `npx` ke `github:ganezha/kotak-kecil#v` + angka `package.json`. Salinan orang tidak lagi mengikuti `main`.
+- **OpenAI**: `sk-` klasik (20+) tertangkap, bukan hanya `sk-proj-` / `sk-svcacct-`. `sk-ant-` tetap Anthropic, tidak dobel.
+- **`*.pem` / `*.key`**: nama = sinyal lemah. `fullchain.pem` / `cert.pem` (sertifikat publik) bukan temuan. `key-file` hanya kalau kosong atau tidak terbaca. Isi `BEGIN … PRIVATE KEY` = `private-key`.
+- **aws-secret**: 40 karakter, hanya di baris dekat `AKIA` / `AWS_SECRET` / `aws_secret_access_key`. Bukan entropy buta.
+- **seed-phrase**: 12 atau 24 kata Latin lowercase plus konteks `seed` / `mnemonic` / `recovery` / `wallet`. Tanpa konteks tidak teriak.
 
 ## [0.4.0] — 2026-09-14
 
