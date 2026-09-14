@@ -186,11 +186,7 @@ export async function walk(dir, files) {
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (!SKIP_DIR.has(entry.name) && !entry.name.startsWith(".")) {
-        await walk(full, files);
-      } else if (entry.name === ".github") {
-        await walk(full, files);
-      }
+      if (!SKIP_DIR.has(entry.name)) await walk(full, files);
       continue;
     }
     if (!entry.isFile()) continue;

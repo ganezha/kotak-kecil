@@ -374,6 +374,22 @@ test("npx pin: pasang + template + salinan = v + package.json", async () => {
   assert.equal(hookSrc.includes("github:ganezha/kotak-kecil --"), false);
 });
 
+test("GitHub Actions pin uses ke commit SHA 40 hex", async () => {
+  const files = [
+    ".github/workflows/han.sip.yml",
+    "templates/github-actions.yml",
+  ];
+  const usesRe = /^\s+- uses:\s+(\S+)/gm;
+  for (const rel of files) {
+    const body = await readFile(path.join(ROOT, rel), "utf8");
+    const pins = [...body.matchAll(usesRe)].map((m) => m[1]);
+    assert.ok(pins.length >= 2, rel);
+    for (const spec of pins) {
+      assert.match(spec, /@[0-9a-f]{40}$/, `${rel}: ${spec}`);
+    }
+  }
+});
+
 test("han.sip pasang: hook asing di-backup; .bak lama tidak ditimpa", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "han-sip-"));
   try {

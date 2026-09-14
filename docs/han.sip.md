@@ -37,9 +37,9 @@ Tes yang mengunci ini: `unstaged .env: --staged sip`, `staged .env: --staged bac
 
 ## Walk
 
-Lewati: `.git`, `node_modules`, `dist`, `build`, `coverage`, `.next`, `.turbo`, `.out`, folder tersembunyi lain.
+Lewati: `.git`, `node_modules`, `dist`, `build`, `coverage`, `.next`, `.turbo`, `.out`.
 
-Pengecualian: **`.github`** tetap diwalk — workflow bisa nyimpan token.
+Folder tersembunyi **tetap** diwalk (`.github`, `.hidden`, `.ssh`, `.config`, …). `.git` tidak — itu objek git, bukan sumber.
 
 Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` atau kosong: nama tetap dicek, isi tidak. Null byte → isi tidak discan (bukan teks).
 

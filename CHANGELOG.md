@@ -7,6 +7,11 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+### Security
+
+- Walk tidak lagi melewati seluruh folder tersembunyi. `.hidden/secret` tertangkap. `.git` tetap dilewati.
+- GitHub Actions (`checkout`, `setup-node`, `codeql-action/upload-sarif`) pin ke commit SHA, bukan tag bergerak `v4` / `v3`.
+
 ## [0.5.0] — 2026-09-14
 
 ### Security
