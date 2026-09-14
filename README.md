@@ -66,7 +66,7 @@ node han.sip/cli.mjs --baseline  # temuan diterima — bukan aman
 node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 
-`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx pin commit SHA. Hook asing: cadangan `pre-commit.bak` dulu, baru ditimpa. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
+`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx pin commit SHA. Hook asing: di-chain (`pre-commit.han.sip-prev`) plus cadangan `pre-commit.bak`. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
 
 Hook yang teriak: cabut secret dari index. **Jangan** `git commit --no-verify`. **Jangan** `--write-baseline` sebagai ganti rotate.
 

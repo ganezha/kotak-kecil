@@ -2,9 +2,10 @@
  * Inti ronda: aturan file + isi. Tidak mencetak secret.
  * cli.mjs yang bicara ke manusia / mesin.
  */
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { lstat, readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -37,6 +38,10 @@ export const SKIP_EXT = new Set([
 ]);
 
 export const MAX_BYTES = 512 * 1024;
+export const STREAM_CHUNK = 64 * 1024;
+const LINE_WINDOW = 64 * 1024;
+const LINE_OVERLAP = 2048;
+export const GENERIC_MIN_CONF = 0.6;
 
 export const FILE_RULES = [
   { kind: "env-file", test: (name) => name === ".env" || name.startsWith(".env.") },
@@ -54,6 +59,10 @@ const AWS_SECRET_RE = /(?<![A-Za-z0-9/+])[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])/;
 const AWS_NEAR_RE = /AKIA[0-9A-Z]{16}|AWS_SECRET|aws_secret_access_key/i;
 const SEED_CTX_RE = /\b(?:seed|mnemonic|recovery|wallet)\b/i;
 const SEED_RUN_RE = /\b[a-z]+(?:\s+[a-z]+){11}(?:(?:\s+[a-z]+){12})?\b/;
+const KW_RE =
+  /\b(?:secret|password|passwd|token|api[_-]?key|access[_-]?key|private[_-]?key|credential|auth(?:orization)?|bearer)\b/i;
+const JWT_RE = /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g;
+const GENERIC_CAND_RE = /[A-Za-z0-9_+-]{24,}/g;
 
 export const CONTENT_RULES = [
   {
@@ -104,13 +113,51 @@ export function fingerprint(kind, file, piece = "") {
   return h.digest("hex").slice(0, 16);
 }
 
-function pushHit(hits, file, line, kind, piece = "") {
-  hits.push({
+export function shannon(s) {
+  if (!s) return 0;
+  const freq = new Map();
+  for (const ch of s) freq.set(ch, (freq.get(ch) || 0) + 1);
+  let h = 0;
+  const n = s.length;
+  for (const c of freq.values()) {
+    const p = c / n;
+    h -= p * Math.log2(p);
+  }
+  return h;
+}
+
+/** Skor 0–1. Di bawah GENERIC_MIN_CONF tidak teriak. */
+export function genericConfidence(piece, { keyword = false, jwt = false } = {}) {
+  if (!piece || piece.length < 24) return 0;
+  if (/^https?:\/\//i.test(piece)) return 0;
+  if (/^sha[0-9]+-/i.test(piece)) return 0;
+  if (/^(?:true|false|null|undefined)$/i.test(piece)) return 0;
+  const ent = shannon(piece);
+  let c = 0;
+  if (jwt) c += 0.55;
+  if (keyword) c += 0.4;
+  if (ent >= 4.5) c += 0.35;
+  else if (ent >= 3.7) c += 0.2;
+  else if (ent >= 3.2) c += 0.08;
+  if (piece.length >= 40) c += 0.1;
+  if ((keyword || jwt) && piece.length >= 48 && ent >= 4.7) c += 0.25;
+  if (/^[a-f0-9]+$/i.test(piece) && (piece.length === 40 || piece.length === 64)) {
+    c -= 0.55;
+  }
+  if (c > 1) c = 1;
+  if (c < 0) c = 0;
+  return Math.round(c * 100) / 100;
+}
+
+function pushHit(hits, file, line, kind, piece = "", conf) {
+  const hit = {
     file,
     line,
     kind,
     fp: fingerprint(kind, file, piece),
-  });
+  };
+  if (conf != null) hit.conf = conf;
+  hits.push(hit);
 }
 
 function globRe(pattern) {
@@ -184,6 +231,7 @@ export async function walk(dir, files) {
     return;
   }
   for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (!SKIP_DIR.has(entry.name)) await walk(full, files);
@@ -233,14 +281,14 @@ export function scanName(relFile, hits) {
  * BEGIN PRIVATE KEY → private-key (isi), jangan dobel.
  * BEGIN CERTIFICATE → bukan temuan.
  */
-function considerKeyFile(relFile, hits, { text, empty = false, unreadable = false } = {}) {
+function considerKeyFile(relFile, hits, { text, empty = false, unreadable = false, sawPrivate = false, sawCert = false } = {}) {
   if (!PEM_OR_KEY.test(path.basename(relFile))) return;
   if (empty || unreadable || text == null || text.includes("\u0000")) {
     pushHit(hits, relFile, 0, "key-file");
     return;
   }
-  if (PRIVATE_KEY_RE.test(text)) return;
-  if (PUBLIC_CERT.test(text)) return;
+  if (sawPrivate || PRIVATE_KEY_RE.test(text)) return;
+  if (sawCert || PUBLIC_CERT.test(text)) return;
 }
 
 function scanAwsSecret(relFile, line, text, near, hits) {
@@ -285,6 +333,29 @@ export function scanLine(relFile, line, text, hits, nearby = {}) {
   const near = [nearby.prev, text, nearby.next].filter(Boolean).join("\n") || text;
   scanAwsSecret(relFile, line, text, near, hits);
   scanSeedPhrase(relFile, line, text, near, hits);
+  scanGeneric(relFile, line, text, hits, caught);
+}
+
+function scanGeneric(relFile, line, text, hits, caught) {
+  const keyword = KW_RE.test(text);
+  JWT_RE.lastIndex = 0;
+  GENERIC_CAND_RE.lastIndex = 0;
+  for (const spec of [
+    { re: JWT_RE, jwt: true },
+    { re: GENERIC_CAND_RE, jwt: false },
+  ]) {
+    spec.re.lastIndex = 0;
+    let m;
+    while ((m = spec.re.exec(text))) {
+      const a = m.index;
+      const b = a + m[0].length;
+      if (caught.some((s) => a < s.b && b > s.a)) continue;
+      const conf = genericConfidence(m[0], { keyword, jwt: spec.jwt });
+      if (conf < GENERIC_MIN_CONF) continue;
+      caught.push({ a, b });
+      pushHit(hits, relFile, line, "generic-secret", m[0], conf);
+    }
+  }
 }
 
 export function scanText(relFile, text, hits) {
@@ -305,6 +376,129 @@ export function uniqueHits(hits) {
   return out;
 }
 
+function notePem(text, pem) {
+  if (PRIVATE_KEY_RE.test(text)) pem.priv = true;
+  if (PUBLIC_CERT.test(text)) pem.cert = true;
+}
+
+function emitStreamLine(relFile, lineNo, text, prev, next, hits, pem) {
+  scanLine(relFile, lineNo, text, hits, { prev, next });
+  notePem(text, pem);
+}
+
+/**
+ * Isi file besar: chunk, bukan Buffer utuh.
+ * Baris ditahan satu langkah supaya prev/next ada.
+ * Baris raksasa tanpa newline dipecah jendela + overlap.
+ */
+export async function scanBufferStream(relFile, readable, hits) {
+  let pending = "";
+  let prevComplete = "";
+  let hold = null;
+  let lineNo = 1;
+  let binary = false;
+  const pem = { priv: false, cert: false };
+
+  const emitHeld = (nextText) => {
+    if (!hold) return;
+    emitStreamLine(relFile, hold.lineNo, hold.text, hold.prev, nextText, hits, pem);
+    hold = null;
+  };
+
+  const pushCompleteLine = (text) => {
+    emitHeld(text);
+    hold = { lineNo, text, prev: prevComplete };
+    prevComplete = text;
+    lineNo += 1;
+  };
+
+  const windowHuge = () => {
+    while (pending.length > LINE_WINDOW) {
+      const slice = pending.slice(0, LINE_WINDOW);
+      emitHeld("");
+      emitStreamLine(relFile, lineNo, slice, prevComplete, "", hits, pem);
+      pending = pending.slice(LINE_WINDOW - LINE_OVERLAP);
+      prevComplete = "";
+    }
+  };
+
+  for await (const chunk of readable) {
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    if (buf.includes(0)) {
+      binary = true;
+      break;
+    }
+    pending += buf.toString("utf8");
+    if (pending.includes("\u0000")) {
+      binary = true;
+      break;
+    }
+    for (;;) {
+      const crlf = pending.indexOf("\r\n");
+      const lf = pending.indexOf("\n");
+      const cr = pending.indexOf("\r");
+      let idx = -1;
+      let skip = 1;
+      if (crlf !== -1 && (lf === -1 || crlf <= lf) && (cr === -1 || crlf <= cr)) {
+        idx = crlf;
+        skip = 2;
+      } else if (lf !== -1 && (cr === -1 || lf <= cr)) {
+        idx = lf;
+      } else if (cr !== -1) {
+        idx = cr;
+      }
+      if (idx === -1) break;
+      pushCompleteLine(pending.slice(0, idx));
+      pending = pending.slice(idx + skip);
+    }
+    windowHuge();
+  }
+
+  if (binary) {
+    considerKeyFile(relFile, hits, { unreadable: true });
+    return;
+  }
+  if (pending.length) pushCompleteLine(pending);
+  emitHeld("");
+  considerKeyFile(relFile, hits, {
+    text: "ok",
+    sawPrivate: pem.priv,
+    sawCert: pem.cert,
+  });
+}
+
+export async function scanFileStream(absPath, relFile, hits) {
+  const stream = createReadStream(absPath, { highWaterMark: STREAM_CHUNK });
+  try {
+    await scanBufferStream(relFile, stream, hits);
+  } finally {
+    stream.destroy();
+  }
+}
+
+export async function scanStagedStream(root, relPath, hits) {
+  const child = spawn("git", ["show", `:${relPath}`], {
+    cwd: root,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const err = [];
+  child.stderr.on("data", (d) => err.push(d));
+  let scanErr;
+  try {
+    await scanBufferStream(relPath, child.stdout, hits);
+  } catch (e) {
+    scanErr = e;
+    child.kill();
+  }
+  const code = await new Promise((resolve) => {
+    child.on("close", resolve);
+  });
+  if (scanErr) throw scanErr;
+  if (code !== 0) {
+    throw new Error(Buffer.concat(err).toString("utf8") || "git show gagal");
+  }
+}
+
 export async function scanFolder(root, { ignore = [] } = {}) {
   const files = [];
   await walk(root, files);
@@ -315,6 +509,14 @@ export async function scanFolder(root, { ignore = [] } = {}) {
     if (isIgnored(shown, ignore)) continue;
     count += 1;
     scanName(shown, hits);
+    let lst;
+    try {
+      lst = await lstat(file);
+    } catch {
+      considerKeyFile(shown, hits, { unreadable: true });
+      continue;
+    }
+    if (lst.isSymbolicLink()) continue;
     let info;
     try {
       info = await stat(file);
@@ -327,7 +529,7 @@ export async function scanFolder(root, { ignore = [] } = {}) {
       continue;
     }
     if (info.size > MAX_BYTES) {
-      considerKeyFile(shown, hits, { unreadable: true });
+      await scanFileStream(file, shown, hits);
       continue;
     }
     let text;
@@ -357,6 +559,26 @@ export async function scanStaged(root, { ignore = [] } = {}) {
     if (isIgnored(relFile, ignore)) continue;
     count += 1;
     scanName(relFile, hits);
+    let size;
+    try {
+      const { stdout } = await execFileP(
+        "git",
+        ["cat-file", "-s", `:${relFile}`],
+        { cwd: root },
+      );
+      size = Number(stdout.trim());
+    } catch {
+      considerKeyFile(relFile, hits, { unreadable: true });
+      continue;
+    }
+    if (!size) {
+      considerKeyFile(relFile, hits, { empty: true });
+      continue;
+    }
+    if (size > MAX_BYTES) {
+      await scanStagedStream(root, relFile, hits);
+      continue;
+    }
     let buf;
     try {
       buf = await readStaged(root, relFile);
@@ -366,10 +588,6 @@ export async function scanStaged(root, { ignore = [] } = {}) {
     }
     if (!buf.length) {
       considerKeyFile(relFile, hits, { empty: true });
-      continue;
-    }
-    if (buf.length > MAX_BYTES) {
-      considerKeyFile(relFile, hits, { unreadable: true });
       continue;
     }
     if (buf.includes(0)) {

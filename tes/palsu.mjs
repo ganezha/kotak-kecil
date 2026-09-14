@@ -21,4 +21,12 @@ export const palsu = {
   seed12: () => Array.from({ length: 12 }, () => "alpha").join(" "),
   seed24: () => Array.from({ length: 24 }, () => "bravo").join(" "),
   nilaiEnv: () => "jangan-cetak-nilai-ini",
+  generic: () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    let s = "";
+    for (let i = 0; i < 44; i += 1) s += chars[i % chars.length];
+    return s;
+  },
+  jwt: () =>
+    ["eyJhbGciOiJIUzI1NiJ9", "eyJjIjoieCJ9", "dGVzdFNpZ25hdHVyZUhhbFNpcA"].join("."),
 };
