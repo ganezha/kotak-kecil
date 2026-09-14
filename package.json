@@ -1,6 +1,6 @@
 {
   "name": "han.sip",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Ronda malam untuk git. Teriak pelan kalau ada secret.",
   "type": "module",

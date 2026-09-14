@@ -7,10 +7,13 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-09-14
+
 ### Security
 
 - Walk tidak lagi melewati seluruh folder tersembunyi. `.hidden/secret` tertangkap. `.git` tetap dilewati.
 - GitHub Actions (`checkout`, `setup-node`, `codeql-action/upload-sarif`) pin ke commit SHA, bukan tag bergerak `v4` / `v3`.
+- npx pin ke commit SHA (`d67521f6ed1ea0b309912563f593bd506c87eada`), bukan tag `#v` yang bisa digeser.
 
 ## [0.5.0] — 2026-09-14
 
@@ -106,7 +109,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ganezha/kotak-kecil/compare/v0.2.0...v0.3.0

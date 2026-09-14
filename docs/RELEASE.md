@@ -30,7 +30,8 @@ Belum npm. `private: true` itu disengaja. Distribusi = `npx github:ganezha/kotak
    Body = isi seksi changelog versi itu, bukan esai.
    Kalau *immutable releases* aktif: publish setelah draft siap. Tag dan aset terkunci.
 5. Jangan `npm publish` selama `"private": true`.
-6. Cek dari repo **lain**: `npx --yes github:ganezha/kotak-kecil#vX.Y.Z -- --help` harus mencetak usage.
+6. Cek dari repo **lain**: `npx --yes github:ganezha/kotak-kecil#<PIN_SHA> -- --help` harus mencetak usage.
+7. Set `PIN_SHA` di `han.sip/pasang.mjs` ke commit yang berisi kode rilis (bukan tag). Tag `vX.Y.Z` untuk manusia; npx yang dieksekusi = SHA.
 
 ## Immutable
 
@@ -40,7 +41,7 @@ Pertimbangkan **immutable releases** (repo: Settings → General → Releases �
 - aset rilis tidak bisa ditambah/diubah/dihapus
 - judul dan catatan masih bisa diedit
 
-`npx github:ganezha/kotak-kecil#vX.Y.Z` mengandalkan tag itu. Tag yang bisa digeser = pin palsu.
+`npx github:ganezha/kotak-kecil#<40-hex>` mengandalkan commit, bukan tag. Tag yang bisa digeser = pin palsu — itu sebabnya `PIN_SHA` bukan `#vX.Y.Z`.
 
 Rilis ini tidak mengunggah aset terpisah (npx ambil tree dari tag). Immutable tetap berguna: mengunci tag.
 
