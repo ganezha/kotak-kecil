@@ -28,6 +28,7 @@
     "han.sip:staged": "node han.sip/cli.mjs --staged",
     "han.sip:pasang": "node han.sip/cli.mjs pasang",
     "jejak": "node jejak/cli.mjs",
-    "test": "node --test tes/*.test.mjs"
+    "test": "node --test tes/*.test.mjs",
+    "bench": "node tes/han.sip-bench.mjs"
   }
 }

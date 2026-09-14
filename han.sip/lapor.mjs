@@ -1,6 +1,6 @@
 /**
  * Laporan: manusia, JSON, SARIF.
- * Baseline menyimpan fingerprint turunan (SHA-256 dipotong), bukan plaintext.
+ * Baseline menyimpan fingerprint turunan (SHA-256 128-bit + penuh), bukan plaintext.
  * Baseline = temuan yang diterima/di-suppress — bukan “aman”.
  */
 import { readFile, writeFile } from "node:fs/promises";
@@ -50,8 +50,9 @@ export function printHuman({ count, hits, staged, diff, quiet, suppressed }) {
   return 1;
 }
 
-function publicHit({ file, line, kind, fp, conf }) {
+function publicHit({ file, line, kind, fp, sha256, conf }) {
   const o = { file: posixPath(file), line, kind, fp };
+  if (sha256) o.sha256 = sha256;
   if (conf != null) o.conf = conf;
   return o;
 }
@@ -118,7 +119,10 @@ export function toSarif({ hits, version }) {
               },
             ],
           };
-          if (h.fp) result.partialFingerprints = { "han.sip/v1": h.fp };
+          if (h.fp) {
+            result.partialFingerprints = { "han.sip/v2": h.fp };
+            if (h.sha256) result.partialFingerprints["han.sip/sha256"] = h.sha256;
+          }
           if (h.conf != null) result.properties = { confidence: h.conf };
           return result;
         }),
@@ -152,12 +156,13 @@ export function splitBaseline(hits, fps) {
 
 export async function writeBaseline(file, hits) {
   const body = {
-    version: 1,
+    version: 2,
     note: BASELINE_NOTE,
-    hits: hits.map(({ file: f, kind, fp }) => ({
+    hits: hits.map(({ file: f, kind, fp, sha256 }) => ({
       file: posixPath(f),
       kind,
       fp,
+      sha256,
     })),
   };
   await writeFile(file, `${JSON.stringify(body, null, 2)}\n`, "utf8");

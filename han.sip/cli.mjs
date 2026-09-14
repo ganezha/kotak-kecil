@@ -19,11 +19,13 @@ import {
   writeBaseline,
 } from "./lapor.mjs";
 import { pasang, NPX } from "./pasang.mjs";
+import { loadPlugins } from "./plugin.mjs";
 import {
   loadIgnoreFile,
   scanDiff,
   scanFolder,
   scanStaged,
+  setRules,
 } from "./ronda.mjs";
 
 const execFileP = promisify(execFile);
@@ -44,6 +46,7 @@ Usage:
   han.sip --ignore <pola>       skip path (bisa diulang)
   han.sip --baseline [file]     temuan diterima/di-suppress — bukan aman
   han.sip --write-baseline [file]  tulis fingerprint turunan (bukan plaintext)
+  han.sip --plugin <file.mjs>   aturan extra (bisa diulang)
   han.sip pasang                pre-commit di repo git ini
   han.sip pasang --check
 
@@ -51,6 +54,7 @@ npx --yes ${NPX} -- .
 npx --yes ${NPX} -- pasang
 
 .han.sipignore di root repo ikut dibaca. Pola: * dan **.
+.han.sip/plugins/*.mjs auto. --plugin menambah.
 --staged --diff = hanya baris baru di index.
 Hook yang teriak: cabut secret dari index. Jangan git commit --no-verify.
 --write-baseline tanpa rotate = memilih diam, bukan perbaikan.
@@ -84,6 +88,7 @@ export function parseArgs(argv) {
   let baseline = null;
   let write = null;
   let check = false;
+  const plugin = [];
 
   for (let i = 0; i < rest.length; i += 1) {
     const a = rest[i];
@@ -134,6 +139,13 @@ export function parseArgs(argv) {
       i = t.i;
       continue;
     }
+    if (a === "--plugin" || a.startsWith("--plugin=")) {
+      const t = takeVal(rest, a, "--plugin", i);
+      if (!t.val) throw new Error("--plugin butuh file .mjs");
+      plugin.push(t.val);
+      i = t.i;
+      continue;
+    }
     if (a === "--") continue;
     if (a.startsWith("-")) throw new Error(`flag tidak dikenal: ${a}`);
     positional.push(a);
@@ -157,6 +169,7 @@ export function parseArgs(argv) {
     diff,
     diffRef,
     ignore,
+    plugin,
     baseline,
     writeBaseline: write,
     folder: positional[0] ?? ".",
@@ -208,6 +221,13 @@ async function main() {
     ignoreRoot = root;
   }
   const ignore = [...(await loadIgnoreFile(ignoreRoot)), ...opts.ignore];
+  const loaded = await loadPlugins({
+    root: ignoreRoot,
+    files: (opts.plugin || []).map((p) =>
+      path.isAbsolute(p) ? p : path.resolve(process.cwd(), p),
+    ),
+  });
+  if (loaded.plugins.length) setRules(loaded.rules);
   const scanOpts = { ignore };
   const pathFilter = path.relative(root, folder);
 

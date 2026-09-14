@@ -63,6 +63,7 @@ node han.sip/cli.mjs --diff      # baris baru vs HEAD
 node han.sip/cli.mjs --json
 node han.sip/cli.mjs --sarif     # GitHub code scanning
 node han.sip/cli.mjs --baseline  # temuan diterima — bukan aman
+node han.sip/cli.mjs --plugin x.mjs
 node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 

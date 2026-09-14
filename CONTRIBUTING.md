@@ -18,8 +18,9 @@ A tool belongs in this toolbox if:
 1. Open an issue first if the change is more than a typo — pakai template di `.github/ISSUE_TEMPLATE/`
 2. Fork, branch, pull request against `main` (ada [PR template](.github/PULL_REQUEST_TEMPLATE.md))
 3. `npm test` must pass
-   - han.sip: fixture `.env`, staged vs unstaged, token palsu, json/sarif/diff/baseline/ignore
+   - han.sip: fixture `.env`, staged vs unstaged, token palsu, json/sarif/diff/baseline/ignore, plugin, fuzz diff
    - jejak: repo kosong, hari ke-2, jendela
+   - `npm run bench` opsional, bukan CI
 4. README / docs / `[Unreleased]` di [CHANGELOG.md](CHANGELOG.md) kalau user-facing
 5. Jangan nulis `.git` dari npm lifecycle
 

@@ -10,7 +10,7 @@ import test from "node:test";
 import { parseArgs } from "../han.sip/cli.mjs";
 import { hookBody, NPX, PIN_SHA, PREV_HOOK } from "../han.sip/pasang.mjs";
 import { BASELINE_NOTE } from "../han.sip/lapor.mjs";
-import { fingerprint, matchGlob, parseIgnore, parseUnifiedDiff } from "../han.sip/ronda.mjs";
+import { fingerprint, fingerprint256, FP_HEX, SHA256_HEX, matchGlob, parseIgnore, parseUnifiedDiff } from "../han.sip/ronda.mjs";
 import { palsu } from "./palsu.mjs";
 
 const execFileP = promisify(execFile);
@@ -64,6 +64,9 @@ test("parseArgs: flag baru", () => {
   const p = parseArgs(["node", "han.sip", "pasang", "--check"]);
   assert.equal(p.command, "pasang");
   assert.equal(p.check, true);
+  const pl = parseArgs(["node", "han.sip", "--plugin", "a.mjs", "--plugin=b.mjs"]);
+  assert.deepEqual(pl.plugin, ["a.mjs", "b.mjs"]);
+  assert.throws(() => parseArgs(["node", "han.sip", "--plugin"]), /butuh file/);
   const d = parseArgs(["node", "han.sip", "--", "--json", "."]);
   assert.equal(d.json, true);
   assert.equal(d.folder, ".");
@@ -117,7 +120,9 @@ test("--json: bentuk, tanpa nilai secret", async () => {
     assert.equal(body.hits[0].file, "app.js");
     assert.equal(body.hits[0].line, 1);
     assert.equal(typeof body.hits[0].fp, "string");
-    assert.equal(body.hits[0].fp.length, 16);
+    assert.equal(body.hits[0].fp.length, FP_HEX);
+    assert.equal(body.hits[0].sha256.length, SHA256_HEX);
+    assert.equal(body.hits[0].sha256.startsWith(body.hits[0].fp), true);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -135,6 +140,8 @@ test("--sarif: 2.1.0, startLine >= 1, tanpa secret", async () => {
     const res = body.runs[0].results[0];
     assert.equal(res.ruleId, "env-file");
     assert.ok(res.locations[0].physicalLocation.region.startLine >= 1);
+    assert.equal(res.partialFingerprints["han.sip/v2"].length, FP_HEX);
+    assert.equal(res.partialFingerprints["han.sip/sha256"].length, SHA256_HEX);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -182,6 +189,9 @@ test("--baseline: temuan lama sip, temuan baru gagal", async () => {
     assert.equal(written.code, 0);
     const raw = JSON.parse(await readFile(path.join(dir, "base.json"), "utf8"));
     assert.equal(raw.hits.length, 1);
+    assert.equal(raw.version, 2);
+    assert.equal(raw.hits[0].fp.length, FP_HEX);
+    assert.equal(raw.hits[0].sha256.length, SHA256_HEX);
     assert.equal(raw.note, BASELINE_NOTE);
     assert.match(raw.note, /bukan aman/);
     assert.equal(JSON.stringify(raw).includes(a), false);
@@ -306,20 +316,27 @@ test("symlink bin (npx) tetap menjalankan main", async () => {
   }
 });
 
-test("fingerprint: SHA-256 turunan, 16 hex, tidak bisa dikembalikan ke token", () => {
+test("fingerprint: 128-bit + SHA-256 penuh, bukan token", () => {
   const token = palsu.github();
   const fp = fingerprint("github-token", "app.js", token);
-  assert.match(fp, /^[0-9a-f]{16}$/);
+  const full = fingerprint256("github-token", "app.js", token);
+  assert.match(fp, /^[0-9a-f]{32}$/);
+  assert.match(full, /^[0-9a-f]{64}$/);
+  assert.equal(fp.length, FP_HEX);
+  assert.equal(full.length, SHA256_HEX);
+  assert.equal(full.startsWith(fp), true);
   assert.equal(fp.includes(token), false);
+  assert.equal(full.includes(token), false);
   assert.equal(token.includes(fp), false);
-  const full = createHash("sha256")
+  const hashed = createHash("sha256")
     .update("github-token")
     .update("\0")
     .update("app.js")
     .update("\0")
     .update(token)
     .digest("hex");
-  assert.equal(fp, full.slice(0, 16));
+  assert.equal(full, hashed);
+  assert.equal(fp, hashed.slice(0, 32));
   assert.notEqual(fingerprint("github-token", "other.js", token), fp);
   assert.equal(fingerprint("github-token", "app.js", token), fp);
 });
@@ -473,5 +490,106 @@ test("han.sip pasang: chain hook asing; prev gagal = han.sip tidak jalan", async
     assert.equal(fail.stdout.includes("HAN_SIP_RAN"), false);
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("plugin: --plugin dan auto .han.sip/plugins", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "han-sip-"));
+  try {
+    const val = "acme_" + "B".repeat(20);
+    await writeFile(
+      path.join(dir, "plug.mjs"),
+      "export const rules = { content: [{ kind: \"acme-key\", re: /acme_[A-Za-z0-9]{16,}/ }] };\n",
+    );
+    await writeFile(path.join(dir, "app.js"), `const k = "${val}"\n`);
+    const off = await runCli(["--quiet", "."], dir);
+    assert.equal(off.code, 0);
+
+    const on = await runCli(["--plugin", "plug.mjs", "."], dir);
+    assert.equal(on.code, 1);
+    assert.match(on.stdout, /acme-key/);
+    assert.equal(on.stdout.includes(val), false);
+
+    await mkdir(path.join(dir, ".han.sip", "plugins"), { recursive: true });
+    await writeFile(
+      path.join(dir, ".han.sip", "plugins", "auto.mjs"),
+      "export const rules = { content: [{ kind: \"auto-key\", re: /auto_[A-Za-z0-9]{16,}/ }] };\n",
+    );
+    const autoVal = "auto_" + "C".repeat(20);
+    await writeFile(path.join(dir, "b.js"), `const k = "${autoVal}"\n`);
+    const auto = await runCli(["."], dir);
+    assert.equal(auto.code, 1);
+    assert.match(auto.stdout, /auto-key/);
+    assert.equal(auto.stdout.includes(autoVal), false);
+
+    const bad = await runCli(["--plugin", "tidak-ada.mjs", "."], dir);
+    assert.equal(bad.code, 2);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+function fuzzDiff(seed) {
+  let x = seed | 0;
+  const rnd = () => {
+    x = (Math.imul(x, 1664525) + 1013904223) | 0;
+    return (x >>> 0) / 4294967296;
+  };
+  const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+  const junk = (n) => {
+    let s = "";
+    for (let i = 0; i < n; i += 1) s += String.fromCharCode(32 + Math.floor(rnd() * 95));
+    return s;
+  };
+  const kinds = [
+    () => "",
+    () => junk(Math.floor(rnd() * 180)),
+    () => `diff --git a/a.js b/a.js\n+++ b/a.js\n@@ -1 +1 @@\n+${junk(24)}\n`,
+    () => "diff --git a/a b/a\n+++ /dev/null\n",
+    () => 'diff --git "a/weird file" "b/weird file"\n+++ b/weird file\n@@ -0,0 +1 @@\n+ok\n',
+    () => "+++ b/no-header\n+line\n",
+    () => "diff --git a/x b/x\n@@ garbage @@\n+still\n",
+    () => "diff --git a/x b/x\n+++ b/x\n@@ -1,1 +NaN @@\n+z\n",
+    () => "diff --git a/x b/x\n+++ b/x\n@@ -1 +1 @@\n+\0bin\n",
+    () => `diff --git a/x b/${"y".repeat(200)}\n+++ b/y\n+ok\n`,
+    () => ["diff --git a/a b/a", "+++ b/a", "@@ -1,0 +1,3 @@", "+a", "+b", "+c"].join("\r\n"),
+    () => "diff --git a/a b/a\n+++ b/a\n@@ -1 +1 @@\n+diff --git a/nested b/nested\n",
+    () => "diff --git a/a b/a\nnew file mode 100644\n+++ b/a\n@@ -0,0 +1 @@\n+ok\n\\ No newline at end of file\n",
+    () => `diff --git a/a b/a\n+++ b/a\n@@ -1 +1 @@\n+${"x".repeat(4000)}`,
+    () => "diff --git a/foo b/bar\nrename from foo\nrename to bar\n+++ b/bar\n@@ -1 +1 @@\n+z\n",
+    () => "diff --git a/a b/a\n+++ b/a\n@@ -1,1 +1,1 @@\n-old\n+new\n",
+    () => "diff --git a/a b/a\n+++ b/a\n@@ -0,0 +1 @@\n+\n",
+    () => "diff --git\n+++ \n@@ \n+",
+    () => "diff --git a/a b/a\n+++ b/a\n@@ -1 +1 @@\n context\n+added\n",
+    () => "diff --git a/a b/a\n+++ b/\"quoted\"\n@@ -1 +1 @@\n+q\n",
+    () => null,
+    () => 42,
+  ];
+  let out = pick(kinds)();
+  if (typeof out !== "string") return out;
+  if (rnd() < 0.3) out = out.slice(0, Math.floor(rnd() * (out.length + 1)));
+  if (rnd() < 0.12) out = out.replace(/\n/g, "\r\n");
+  if (rnd() < 0.12) out += "\ndiff --git a/z b/z\n+++ b/z\n+z\n";
+  return out;
+}
+
+test("fuzz parseUnifiedDiff: tidak throw; bentuk aman", () => {
+  for (let i = 0; i < 250; i += 1) {
+    const text = fuzzDiff(i * 9973 + 17);
+    const files = parseUnifiedDiff(text);
+    assert.equal(Array.isArray(files), true, `iter ${i}`);
+    for (const f of files) {
+      assert.equal(typeof f.file, "string");
+      assert.ok(f.file.length > 0);
+      assert.equal(f.file.includes("\0"), false);
+      assert.equal(typeof f.isNew, "boolean");
+      assert.equal(Array.isArray(f.added), true);
+      for (const row of f.added) {
+        assert.equal(typeof row.line, "number");
+        assert.equal(Number.isFinite(row.line), true);
+        assert.ok(row.line >= 0);
+        assert.equal(typeof row.text, "string");
+      }
+    }
   }
 });
