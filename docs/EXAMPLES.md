@@ -4,18 +4,17 @@ Salin apa adanya. Output disingkat. Isi secret **tidak pernah** muncul.
 
 Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 
-## Di repo kamu (tanpa clone)
+## Di repo kamu
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- .
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --staged
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --diff
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --json .
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- pasang
+npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+npx han.sip .
+npx han.sip --staged
+npx han.sip --diff
+npx han.sip --json .
+npx han.sip --sarif . > han.sip.sarif
+npx han.sip pasang
 ```
-
-`--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
 
 ## Hasil
 
@@ -37,8 +36,9 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --quiet .
-- run: npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --sarif . > han.sip.sarif
+- run: npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+- run: npx han.sip --quiet .
+- run: npx han.sip --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
   with:
     sarif_file: han.sip.sarif
@@ -99,7 +99,7 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --help
+npx han.sip --help
 node han.sip/cli.mjs --help
 ```
 
@@ -108,10 +108,10 @@ Isi `--help` ikut versi. Jangan menghafal dump di sini.
 ### Pasang hook di repo ini
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- pasang
+npx han.sip pasang
 # han.sip pasang: pre-commit terpasang.
 
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- pasang --check
+npx han.sip pasang --check
 # han.sip pasang: sip.
 ```
 

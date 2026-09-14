@@ -6,14 +6,12 @@ A public toolbox. Small tools, one job each.
 
 ## Pakai han.sip sekarang
 
-Node **18+**. Di repo kamu, tanpa clone, tanpa `npm i`:
+Node **18+**. Di repo kamu. `npx github:…` di npm 10 sering gagal (`GitFetcher`); pasang lewat git SHA:
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- .
+npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+npx han.sip .
 ```
-
-`--` memisahkan npm dari han.sip. Pakai kalau kamu kirim flag (`--staged`, `--help`, `--json`).
-
 ```text
 han.sip
 ronda: 12 file
@@ -41,12 +39,12 @@ Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
 Hapus file tidak cukup. Token yang sempat masuk git harus di-rotate.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --help
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --staged
-npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- pasang
+npx han.sip --help
+npx han.sip --staged
+npx han.sip pasang
 ```
 
-CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin npx dan `uses:` ke commit SHA sudah di template.
+CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin `github:…#SHA` dan `uses:` ke commit SHA sudah di template.
 
 Belum npm registry. **Jangan** `npm i han.sip`.
 

@@ -4,7 +4,9 @@
  *
  * Shim 0755 di .git/hooks/pre-commit:
  *   - kalau han.sip/cli.mjs ada di repo (kotak-kecil sendiri) → node lokal
- *   - kalau tidak (repo orang lain) → npx github:ganezha/kotak-kecil# + commit SHA
+ *   - kalau `node_modules/.bin/han.sip` (npm install github:…#SHA) → itu
+ *   - kalau tidak → npx github:ganezha/kotak-kecil# + commit SHA
+ *     (npm 10 `npx github:` sering gagal GitFetcher; pasang lewat npm install)
  *
  * Hook asing: disalin ke pre-commit.han.sip-prev lalu di-chain
  * (prev dulu, han.sip kemudian). Cadangan .bak tetap ada.
@@ -43,6 +45,9 @@ if [ -f "$prev" ]; then
 fi
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
+fi
+if [ -x "$root/node_modules/.bin/han.sip" ]; then
+  exec "$root/node_modules/.bin/han.sip" --staged --quiet
 fi
 exec npx --yes ${NPX} -- --staged --quiet
 `;
