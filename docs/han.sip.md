@@ -131,7 +131,7 @@ fi
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
-exec npx --yes github:ganezha/kotak-kecil#211cc004f3486a602f89cd50e11ffb5f6dad7c8b -- --staged --quiet
+exec npx --yes github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd -- --staged --quiet
 ```
 
 Pin = commit SHA 40 hex (`PIN_SHA` di `pasang.mjs`), bukan tag `#v`. Tag bisa digeser.

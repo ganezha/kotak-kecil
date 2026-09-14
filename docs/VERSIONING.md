@@ -1,6 +1,6 @@
 # Versioning
 
-Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.7.0`.
+Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.8.0`.
 
 Ikut [SemVer](https://semver.org/). Di **0.x**, minor boleh breaking. Major `1.0.0` = janji stabil + (mungkin) npm.
 
@@ -22,9 +22,9 @@ Detector baru = minor, bukan patch: CI yang kemarin hijau bisa jadi `bukan sip`.
 Tag git = `v` + angka `package.json`.
 
 ```text
-package.json  0.7.0
-git tag       v0.7.0
-GitHub Release v0.7.0
+package.json  0.8.0
+git tag       v0.8.0
+GitHub Release v0.8.0
 npx pin       github:ganezha/kotak-kecil# + 40 hex (PIN_SHA)
 ```
 

@@ -7,6 +7,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-09-14
+
 ### Security
 
 - Fingerprint **128 bit** (`fp`, 32 hex) plus SHA-256 penuh (`sha256`, 64 hex). Baseline `version: 2`. SARIF `han.sip/v2` + `han.sip/sha256`. Baseline v1 (16 hex) tidak match — tulis ulang.
@@ -16,6 +18,7 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 - Plugin aturan: `--plugin <file.mjs>` dan auto `.han.sip/plugins/*.mjs`. Template di `templates/plugin.mjs`.
 - `npm run bench` — `tes/han.sip-bench.mjs`.
 - Fuzz `parseUnifiedDiff` (250 seed, tidak throw).
+- npx pin ke `38477de22ecaff33198be1e9509ab1de188c17fd` (commit #11).
 
 ## [0.7.0] — 2026-09-14
 
@@ -129,7 +132,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/ganezha/kotak-kecil/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...v0.5.0
