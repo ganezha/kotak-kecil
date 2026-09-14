@@ -4,7 +4,7 @@ Satu tugas: temukan file dan string berbentuk secret **sebelum** masuk GitHub. T
 
 Baca [cli.mjs](../han.sip/cli.mjs) dulu. File ini hanya yang tidak kentara dari kode.
 
-## Empat file
+## File
 
 | File | Urusan |
 |---|---|
@@ -12,6 +12,7 @@ Baca [cli.mjs](../han.sip/cli.mjs) dulu. File ini hanya yang tidak kentara dari 
 | `han.sip/ronda.mjs` | Walk, aturan, index, diff, ignore, fingerprint |
 | `han.sip/lapor.mjs` | Manusia, JSON, SARIF, baseline |
 | `han.sip/pasang.mjs` | Shim pre-commit di `.git` repo **ini** |
+| `han.sip/plugin.mjs` | Muat aturan extra |
 
 `.githooks/pre-commit.mjs` ikut di-commit. `.git/hooks/pre-commit` tidak.
 
@@ -68,7 +69,9 @@ Seed phrase: 12 atau 24 kata Latin lowercase dipisah spasi, plus konteks `seed` 
 
 `.env.example`: nama file **bukan** temuan `env-file`. Isi **tetap** dironda. `API_KEY=` lolos. `ghp_…` di file itu = temuan. Model: [SECURITY.md](../SECURITY.md).
 
-Hit unik: fingerprint turunan `sha256(kind || NUL || posix(file) || NUL || potongan cocok)` 16 hex. Potongan itu material yang cocok rule (bisa secret). Hash satu arah, tidak disimpan sebagai plaintext, tidak dicetak, tidak bisa dikembalikan ke nilai. Bukan credential — tetap bukti bahwa string berbentuk secret ada di path itu.
+Hit unik: fingerprint `sha256(kind || NUL || posix(file) || NUL || potongan cocok)`. **`fp`** = 32 hex (128 bit). **`sha256`** = 64 hex penuh. Potongan itu material yang cocok rule (bisa secret). Hash satu arah, tidak disimpan sebagai plaintext, tidak dicetak. Bukan credential — tetap bukti bahwa string berbentuk secret ada di path itu.
+
+Baseline v1 (16 hex) tidak match v2. Tulis ulang `--write-baseline` setelah upgrade.
 
 ## Ignore
 
@@ -78,7 +81,7 @@ Hit unik: fingerprint turunan `sha256(kind || NUL || posix(file) || NUL || poton
 
 Repo lama yang sudah kena temuan tidak bisa memakai tool kalau setiap CI merah. Baseline **bukan** stempel aman.
 
-`--write-baseline [file]` (default `.han.sip-baseline.json`) menulis `{ version, note, hits: [{ file, kind, fp }] }`. `note`: diterima/di-suppress, bukan aman. `--baseline` membuang hit yang `fp`-nya sudah ada: exit 0 kalau sisanya kosong. Temuan baru tetap `1`. JSON: `baseline.safe` selalu `false`.
+`--write-baseline [file]` (default `.han.sip-baseline.json`) menulis `{ version: 2, note, hits: [{ file, kind, fp, sha256 }] }`. `note`: diterima/di-suppress, bukan aman. `--baseline` membuang hit yang `fp`-nya sudah ada: exit 0 kalau sisanya kosong. Temuan baru tetap `1`. JSON: `baseline.safe` selalu `false`.
 
 `--write-baseline` tanpa `--baseline` = snapshot, exit 0 meski ada temuan — tetap “diterima, bukan aman”.
 
@@ -86,7 +89,20 @@ Kalau nilai itu sempat masuk git: rotate dulu, baru baseline. `--write-baseline`
 
 ## Mesin
 
-`--json` / `--sarif` ke stdout. `--quiet` tidak menekan JSON/SARIF. Pilih satu. SARIF 2.1.0, `startLine >= 1`, `partialFingerprints["han.sip/v1"]`. Redirect: `han.sip --sarif > han.sip.sarif`.
+`--json` / `--sarif` ke stdout. `--quiet` tidak menekan JSON/SARIF. Pilih satu. SARIF 2.1.0, `startLine >= 1`, `partialFingerprints["han.sip/v2"]` (128 bit) dan `["han.sip/sha256"]` (penuh). Redirect: `han.sip --sarif > han.sip.sarif`.
+
+## Plugin
+
+`--plugin <file.mjs>` bisa diulang. Plus auto `.han.sip/plugins/*.mjs` di root repo.
+
+```js
+export const rules = {
+  content: [{ kind: "acme-key", re: /acme_[A-Za-z0-9]{20,}/ }],
+  file: [{ kind: "acme-file", test: (name) => name === "secrets.acme" }],
+};
+```
+
+Contoh: [`templates/plugin.mjs`](../templates/plugin.mjs). kind baru = temuan extra. Plugin rusak → exit 2. Builtin tidak bisa dihapus dari plugin.
 
 ## Exit
 

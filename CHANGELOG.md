@@ -7,6 +7,16 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+### Security
+
+- Fingerprint **128 bit** (`fp`, 32 hex) plus SHA-256 penuh (`sha256`, 64 hex). Baseline `version: 2`. SARIF `han.sip/v2` + `han.sip/sha256`. Baseline v1 (16 hex) tidak match — tulis ulang.
+
+### Added
+
+- Plugin aturan: `--plugin <file.mjs>` dan auto `.han.sip/plugins/*.mjs`. Template di `templates/plugin.mjs`.
+- `npm run bench` — `tes/han.sip-bench.mjs`.
+- Fuzz `parseUnifiedDiff` (250 seed, tidak throw).
+
 ## [0.7.0] — 2026-09-14
 
 ### Security

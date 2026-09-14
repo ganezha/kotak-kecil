@@ -141,7 +141,7 @@ node han.sip/cli.mjs --sarif . > han.sip.sarif
 # Actions: upload han.sip.sarif pakai github/codeql-action/upload-sarif
 ```
 
-`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — hanya `file`, `line`, `kind`, `fp`. `fp` = fingerprint turunan (SHA-256 dipotong), bukan plaintext. Lihat [SECURITY.md](../SECURITY.md).
+`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — `file`, `line`, `kind`, `fp` (128 bit), `sha256` (penuh). Bukan plaintext. Lihat [SECURITY.md](../SECURITY.md).
 
 `ok: true` = sip. `ok: false` = ada temuan. `hits[].kind` + `hits[].file` — tidak ada nilai token.
 

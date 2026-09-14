@@ -52,10 +52,12 @@ han.sip is a gate, not a cleanup crew.
 `fp` is a **derived, non-reversible** identifier:
 
 ```text
-sha256(kind || NUL || posix(file) || NUL || matched_piece) → first 16 hex
+sha256(kind || NUL || posix(file) || NUL || matched_piece)
+  fp     = 32 hex (128 bit)
+  sha256 = 64 hex (full)
 ```
 
-`matched_piece` is the substring that hit the rule (secret-shaped material). It is hashed, never stored, never printed. SHA-256 does not reverse to the token. 16 hex (64 bits) is an id for suppression, not a password hash.
+`matched_piece` is the substring that hit the rule (secret-shaped material). It is hashed, never stored as plaintext, never printed. SHA-256 does not reverse to the token. 128-bit `fp` is an id for suppression; full SHA-256 is the same digest without truncation. Not a password hash.
 
 The baseline file is not a credential dump. It **is** evidence that a secret-shaped string existed at a path. Do not treat `fp` as “not derived from a secret”.
 

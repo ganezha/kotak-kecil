@@ -98,19 +98,27 @@ export function posixPath(p) {
 /**
  * Fingerprint turunan, bukan plaintext token.
  *
- * sha256(kind || NUL || posix(file) || NUL || matched_piece) → 16 hex.
+ * sha256(kind || NUL || posix(file) || NUL || matched_piece)
+ *   fp     = 32 hex (128 bit) — identitas baseline / unik
+ *   sha256 = 64 hex (penuh)
  * `piece` adalah potongan yang cocok rule (bisa material secret).
- * SHA-256 satu arah; 16 hex (64 bit) tidak bisa dikembalikan ke nilai.
- * Bukan credential. Tetap bukti bahwa string berbentuk secret ada di path itu.
+ * Satu arah. Bukan credential. Tetap bukti string berbentuk secret ada di path itu.
  */
-export function fingerprint(kind, file, piece = "") {
+export const FP_HEX = 32;
+export const SHA256_HEX = 64;
+
+export function fingerprint256(kind, file, piece = "") {
   const h = createHash("sha256");
   h.update(kind);
   h.update("\0");
   h.update(posixPath(file));
   h.update("\0");
   h.update(piece);
-  return h.digest("hex").slice(0, 16);
+  return h.digest("hex");
+}
+
+export function fingerprint(kind, file, piece = "") {
+  return fingerprint256(kind, file, piece).slice(0, FP_HEX);
 }
 
 export function shannon(s) {
@@ -150,14 +158,33 @@ export function genericConfidence(piece, { keyword = false, jwt = false } = {}) 
 }
 
 function pushHit(hits, file, line, kind, piece = "", conf) {
+  const sha256 = fingerprint256(kind, file, piece);
   const hit = {
     file,
     line,
     kind,
-    fp: fingerprint(kind, file, piece),
+    fp: sha256.slice(0, FP_HEX),
+    sha256,
   };
   if (conf != null) hit.conf = conf;
   hits.push(hit);
+}
+
+let activeContent = null;
+let activeFile = null;
+
+/** Plugin / tes. null = builtin. */
+export function setRules(next) {
+  activeContent = next?.content ?? null;
+  activeFile = next?.file ?? null;
+}
+
+function contentRules() {
+  return activeContent || CONTENT_RULES;
+}
+
+function fileRules() {
+  return activeFile || FILE_RULES;
 }
 
 function globRe(pattern) {
@@ -270,7 +297,7 @@ export async function readStaged(root, relPath) {
 export function scanName(relFile, hits) {
   const name = path.basename(relFile);
   if (isExampleEnv(name)) return;
-  for (const rule of FILE_RULES) {
+  for (const rule of fileRules()) {
     if (rule.test(name)) pushHit(hits, relFile, 0, rule.kind);
   }
 }
@@ -321,7 +348,7 @@ export function scanContent(relFile, text, hits) {
 export function scanLine(relFile, line, text, hits, nearby = {}) {
   if (text == null || text.includes("\u0000")) return;
   const caught = [];
-  for (const rule of CONTENT_RULES) {
+  for (const rule of contentRules()) {
     const m = rule.re.exec(text);
     if (!m) continue;
     const a = m.index;
@@ -602,20 +629,22 @@ export async function scanStaged(root, { ignore = [] } = {}) {
 }
 
 function unquoteGitPath(p) {
-  let s = p.trim();
-  if (s.startsWith('"') && s.endsWith('"')) {
+  let s = String(p ?? "").trim();
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
     s = s.slice(1, -1).replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   }
   if (s.startsWith("b/")) s = s.slice(2);
   return s;
 }
 
-/** Parse `git diff -U0`. Hanya baris `+`. */
+/** Parse `git diff -U0`. Hanya baris `+`. Input rusak → hasil parsial, tidak throw. */
 export function parseUnifiedDiff(text) {
   const files = [];
   let cur = null;
   let newLine = 0;
-  for (const raw of text.split(/\n/)) {
+  const src = text == null ? "" : String(text);
+  for (const line of src.split(/\r?\n/)) {
+    const raw = line.endsWith("\r") ? line.slice(0, -1) : line;
     if (raw.startsWith("diff --git ")) {
       cur = { file: "", added: [], isNew: false };
       files.push(cur);
@@ -636,7 +665,8 @@ export function parseUnifiedDiff(text) {
     }
     const hunk = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
     if (hunk) {
-      newLine = Number(hunk[1]);
+      const n = Number(hunk[1]);
+      newLine = Number.isFinite(n) ? n : 0;
       continue;
     }
     if (raw.startsWith("+") && !raw.startsWith("+++")) {
