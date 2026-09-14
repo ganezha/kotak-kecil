@@ -95,7 +95,7 @@ root="$(git rev-parse --show-toplevel)" || exit 2
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
-exec npx --yes github:ganezha/kotak-kecil -- --staged --quiet
+exec npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged --quiet
 ```
 
 `--check` memastikan file hook ada dan mengandung marker kita (termasuk hook lama yang menunjuk `.githooks/pre-commit.mjs`).

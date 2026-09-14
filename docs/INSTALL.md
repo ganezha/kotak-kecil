@@ -6,13 +6,7 @@ Belum terbit di registry. **Jangan** `npm i han.sip`.
 
 ## Satu perintah (cara utama)
 
-Di repo kamu:
-
-```bash
-npx --yes github:ganezha/kotak-kecil -- .
-```
-
-Pin rilis:
+Di repo kamu. Pin ke rilis (`#v` + angka `package.json`):
 
 ```bash
 npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
@@ -23,12 +17,12 @@ npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
 `0` = `sip.` = bersih. `1` = ada temuan (jenis + lokasi, **bukan** nilai secret). `2` = gagal jalan — **bukan** aman.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- --help
-npx --yes github:ganezha/kotak-kecil -- --staged
-npx --yes github:ganezha/kotak-kecil -- --diff
-npx --yes github:ganezha/kotak-kecil -- --json .
-npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --help
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --diff
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --json .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
 ```
 
 `pasang` menulis `.git/hooks/pre-commit` di **repo ini**. Tidak global. Tidak lewat `npm prepare`.

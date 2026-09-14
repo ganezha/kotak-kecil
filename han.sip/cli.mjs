@@ -18,7 +18,7 @@ import {
   toSarif,
   writeBaseline,
 } from "./lapor.mjs";
-import { pasang } from "./pasang.mjs";
+import { pasang, NPX } from "./pasang.mjs";
 import {
   loadIgnoreFile,
   scanDiff,
@@ -47,8 +47,8 @@ Usage:
   han.sip pasang                pre-commit di repo git ini
   han.sip pasang --check
 
-npx --yes github:ganezha/kotak-kecil -- .
-npx --yes github:ganezha/kotak-kecil -- pasang
+npx --yes ${NPX} -- .
+npx --yes ${NPX} -- pasang
 
 .han.sipignore di root repo ikut dibaca. Pola: * dan **.
 --staged --diff = hanya baris baru di index.

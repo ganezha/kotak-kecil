@@ -9,7 +9,7 @@ A public toolbox. Small tools, one job each.
 Node **18+**. Di repo kamu, tanpa clone, tanpa `npm i`:
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
 ```
 
 `--` memisahkan npm dari han.sip. Pakai kalau kamu kirim flag (`--staged`, `--help`, `--json`).
@@ -41,14 +41,12 @@ Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
 Hapus file tidak cukup. Token yang sempat masuk git harus di-rotate.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- --help
-npx --yes github:ganezha/kotak-kecil -- --staged
-npx --yes github:ganezha/kotak-kecil -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --help
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
 ```
 
-CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`.
-
-Pin rilis: `npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .`
+CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin `#v0.4.0` sudah di template.
 
 Belum npm registry. **Jangan** `npm i han.sip`.
 

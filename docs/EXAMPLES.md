@@ -7,13 +7,12 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu (tanpa clone)
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- .
-npx --yes github:ganezha/kotak-kecil -- --staged
-npx --yes github:ganezha/kotak-kecil -- --diff
-npx --yes github:ganezha/kotak-kecil -- --json .
-npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil -- pasang
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --quiet .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --diff
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --json .
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
 ```
 
 `--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
@@ -38,8 +37,8 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npx --yes github:ganezha/kotak-kecil -- --quiet .
-- run: npx --yes github:ganezha/kotak-kecil -- --sarif . > han.sip.sarif
+- run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --quiet .
+- run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@v3
   with:
     sarif_file: han.sip.sarif
@@ -100,7 +99,7 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- --help
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --help
 node han.sip/cli.mjs --help
 ```
 
@@ -109,10 +108,10 @@ Isi `--help` ikut versi. Jangan menghafal dump di sini.
 ### Pasang hook di repo ini
 
 ```bash
-npx --yes github:ganezha/kotak-kecil -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
 # han.sip pasang: pre-commit terpasang.
 
-npx --yes github:ganezha/kotak-kecil -- pasang --check
+npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang --check
 # han.sip pasang: sip.
 ```
 

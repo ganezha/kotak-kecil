@@ -7,6 +7,10 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+### Security
+
+- `pasang` dan template Actions pin `npx` ke `github:ganezha/kotak-kecil#v` + angka `package.json`. Salinan orang tidak lagi mengikuti `main`.
+
 ## [0.4.0] — 2026-09-14
 
 ### Security
