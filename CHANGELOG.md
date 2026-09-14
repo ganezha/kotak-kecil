@@ -7,6 +7,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-09-14
+
 ### Fixed
 
 - Instalasi: `npm install github:…#SHA` lalu `npx han.sip`. `npx github:` di npm 10 gagal GitFetcher.
@@ -137,7 +139,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/ganezha/kotak-kecil/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/ganezha/kotak-kecil/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...v0.6.0
