@@ -13,7 +13,7 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Walk tidak lagi melewati seluruh folder tersembunyi. `.hidden/secret` tertangkap. `.git` tetap dilewati.
 - GitHub Actions (`checkout`, `setup-node`, `codeql-action/upload-sarif`) pin ke commit SHA, bukan tag bergerak `v4` / `v3`.
-- npx pin ke commit SHA (`d67521f6ed1ea0b309912563f593bd506c87eada`), bukan tag `#v` yang bisa digeser.
+- npx pin ke commit SHA (`16f0c992c0d2dbbc18d0310882cf577ff764cfb8`), bukan tag `#v` yang bisa digeser.
 
 ## [0.5.0] — 2026-09-14
 

@@ -22,11 +22,11 @@ jobs:
           node-version: "22"
 
       - name: ronda malam
-        run: npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --quiet .
+        run: npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --quiet .
 
       - name: SARIF
         if: always()
-        run: npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --sarif . > han.sip.sarif
+        run: npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --sarif . > han.sip.sarif
 
       - name: upload SARIF
         if: always()

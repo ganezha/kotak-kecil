@@ -9,7 +9,7 @@ Belum terbit di registry. **Jangan** `npm i han.sip`.
 Di repo kamu. Pin ke commit SHA (bukan tag yang bisa digeser):
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- .
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- .
 ```
 
 `--` memisahkan npm dari han.sip. Pakai di depan flag.
@@ -17,12 +17,12 @@ npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada --
 `0` = `sip.` = bersih. `1` = ada temuan (jenis + lokasi, **bukan** nilai secret). `2` = gagal jalan — **bukan** aman.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --help
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --staged
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --diff
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --json .
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- pasang
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --help
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --staged
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --diff
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --json .
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#16f0c992c0d2dbbc18d0310882cf577ff764cfb8 -- pasang
 ```
 
 `pasang` menulis `.git/hooks/pre-commit` di **repo ini**. Tidak global. Tidak lewat `npm prepare`. Hook asing di-backup ke `pre-commit.bak` dulu. Hook yang teriak: cabut secret, **bukan** `git commit --no-verify`.
