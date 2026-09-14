@@ -37,6 +37,16 @@ The **contents** are still scanned. Empty / placeholder values (`API_KEY=`) are 
 
 Exit `0` with `N diterima di baseline — bukan aman.` is still “you chose to ignore N hits”, not a green bill of health.
 
+Do **not** `--write-baseline` as a substitute for rotating. A baseline of live credentials is a decision to stay quiet.
+
+### Residual ops
+
+han.sip is a gate, not a cleanup crew.
+
+- **Do not `git commit --no-verify`.** The hook failed because the index looks like a secret. Unstage, fix, commit again. `--no-verify` is how tokens reach GitHub.
+- **Do not `--write-baseline` instead of rotating.** If that value entered git, rotate first. Then, if a false-positive or an already-rotated leftover must stay in history, baseline that finding.
+- **Deleting the file is not enough** once git history has the value. Rotate, then consider history rewrite / repo deletion.
+
 ### Fingerprint
 
 `fp` is a **derived, non-reversible** identifier:

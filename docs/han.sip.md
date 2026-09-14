@@ -78,7 +78,7 @@ Repo lama yang sudah kena temuan tidak bisa memakai tool kalau setiap CI merah. 
 
 `--write-baseline` tanpa `--baseline` = snapshot, exit 0 meski ada temuan — tetap “diterima, bukan aman”.
 
-Kalau nilai itu sempat masuk git: rotate dulu, baru baseline.
+Kalau nilai itu sempat masuk git: rotate dulu, baru baseline. `--write-baseline` tanpa rotate = memilih diam. Bukan pengganti `git commit --no-verify` — itu dua cara berbeda untuk mengabaikan temuan; keduanya salah.
 
 ## Mesin
 
@@ -103,12 +103,16 @@ root="$(git rev-parse --show-toplevel)" || exit 2
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
-exec npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged --quiet
+exec npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --staged --quiet
 ```
 
 `--check` memastikan file hook ada dan mengandung marker kita (termasuk hook lama yang menunjuk `.githooks/pre-commit.mjs`).
 
+Hook asing (tidak ada marker): disalin ke `pre-commit.bak` (atau `.bak.<epoch>`), lalu ditimpa. Hook kita ditimpa tanpa cadangan — itu upgrade pin. `.githooks/pre-commit.mjs` memakai `NPX` yang sama.
+
 `han.sip pasang` (atau `node han.sip/pasang.mjs`) jalan di repo **mana pun**. Tidak perlu menyalin `.githooks`.
+
+Pre-commit yang teriak: cabut secret dari index. **Jangan** `git commit --no-verify`.
 
 npx memakai symlink `.bin/han.sip` → `cli.mjs`. `main()` membandingkan `realpath(argv[1])` dengan `import.meta.url` supaya shim itu tidak diam.
 

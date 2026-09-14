@@ -7,13 +7,21 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-14
+
 ### Security
 
-- `pasang` dan template Actions pin `npx` ke `github:ganezha/kotak-kecil#v` + angka `package.json`. Salinan orang tidak lagi mengikuti `main`.
 - **OpenAI**: `sk-` klasik (20+) tertangkap, bukan hanya `sk-proj-` / `sk-svcacct-`. `sk-ant-` tetap Anthropic, tidak dobel.
 - **`*.pem` / `*.key`**: nama = sinyal lemah. `fullchain.pem` / `cert.pem` (sertifikat publik) bukan temuan. `key-file` hanya kalau kosong atau tidak terbaca. Isi `BEGIN … PRIVATE KEY` = `private-key`.
 - **aws-secret**: 40 karakter, hanya di baris dekat `AKIA` / `AWS_SECRET` / `aws_secret_access_key`. Bukan entropy buta.
 - **seed-phrase**: 12 atau 24 kata Latin lowercase plus konteks `seed` / `mnemonic` / `recovery` / `wallet`. Tanpa konteks tidak teriak.
+- `.githooks/pre-commit.mjs` pin npx ke `#v` + `package.json` (sama dengan `pasang` / template). Fallback tidak mengikuti `main`.
+- `pasang`: hook asing tidak ditimpa diam-diam — cadangan `pre-commit.bak` (+ `.bak.<epoch>` kalau sudah ada) dan peringatan dulu.
+
+### Changed
+
+- Pin npx di README / INSTALL / EXAMPLES / template Actions / docs: `#v0.5.0`.
+- Residual ops di docs + `--help`: jangan `git commit --no-verify`; jangan `--write-baseline` tanpa rotate. Pertimbangkan immutable GitHub Release.
 
 ## [0.4.0] — 2026-09-14
 
@@ -22,6 +30,7 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 - **`.env.example`**: nama file bukan temuan `env-file`. **Isi tetap dironda.** Nilai kosong/placeholder lolos; token berbentuk secret tidak.
 - **Baseline**: berarti temuan *diterima/di-suppress*, **bukan** aman. Output manusia, `note` di file baseline, `baseline.safe: false` di JSON.
 - **Fingerprint**: SHA-256 turunan dari kind + path + potongan yang cocok rule, dipotong 16 hex, non-reversible. Bukan plaintext; tetap bukti material secret-shaped. Model: [SECURITY.md](SECURITY.md).
+- `pasang` dan template Actions pin `npx` ke `github:ganezha/kotak-kecil#v` + angka `package.json`. Salinan orang tidak lagi mengikuti `main`.
 
 ### Changed
 
@@ -92,7 +101,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/ganezha/kotak-kecil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ganezha/kotak-kecil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ganezha/kotak-kecil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ganezha/kotak-kecil/compare/v0.1.1...v0.2.0

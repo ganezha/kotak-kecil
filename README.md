@@ -9,7 +9,7 @@ A public toolbox. Small tools, one job each.
 Node **18+**. Di repo kamu, tanpa clone, tanpa `npm i`:
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- .
 ```
 
 `--` memisahkan npm dari han.sip. Pakai kalau kamu kirim flag (`--staged`, `--help`, `--json`).
@@ -41,12 +41,12 @@ Kalau ini pernah masuk git: rotate dulu. Hapus file tidak cukup.
 Hapus file tidak cukup. Token yang sempat masuk git harus di-rotate.
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --help
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --help
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --staged
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang
 ```
 
-CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin `#v0.4.0` sudah di template.
+CI + SARIF: salin [`templates/github-actions.yml`](templates/github-actions.yml) ke `.github/workflows/han.sip.yml`. Pin `#v0.5.0` sudah di template.
 
 Belum npm registry. **Jangan** `npm i han.sip`.
 
@@ -66,7 +66,9 @@ node han.sip/cli.mjs --baseline  # temuan diterima — bukan aman
 node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 
-`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
+`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx pin `#v` + `package.json`. Hook asing: cadangan `pre-commit.bak` dulu, baru ditimpa. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
+
+Hook yang teriak: cabut secret dari index. **Jangan** `git commit --no-verify`. **Jangan** `--write-baseline` sebagai ganti rotate.
 
 ```bash
 npm test

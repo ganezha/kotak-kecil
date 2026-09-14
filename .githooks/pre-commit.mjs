@@ -2,12 +2,14 @@
 /**
  * Pre-commit: ronda git index. Diam kalau sip. Teriak kalau bukan.
  * Fail closed — kalau node/git hilang, commit ditolak.
+ * Pin npx sama dengan pasang: #v + package.json, bukan main.
  */
 import { spawn } from "node:child_process";
 import { execFile } from "node:child_process";
 import { access } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { NPX } from "../han.sip/pasang.mjs";
 
 const execFileP = promisify(execFile);
 
@@ -33,7 +35,7 @@ try {
 } catch {
   code = await run(
     "npx",
-    ["--yes", "github:ganezha/kotak-kecil", "--", "--staged", "--quiet"],
+    ["--yes", NPX, "--", "--staged", "--quiet"],
     root,
   );
 }
