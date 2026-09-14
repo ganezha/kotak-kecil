@@ -7,12 +7,12 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu (tanpa clone)
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- .
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --staged
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --diff
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --json .
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- .
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --staged
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --diff
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --json .
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- pasang
 ```
 
 `--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
@@ -37,8 +37,8 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --quiet .
-- run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
+- run: npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --quiet .
+- run: npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
   with:
     sarif_file: han.sip.sarif
@@ -99,7 +99,7 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --help
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --help
 node han.sip/cli.mjs --help
 ```
 
@@ -108,10 +108,10 @@ Isi `--help` ikut versi. Jangan menghafal dump di sini.
 ### Pasang hook di repo ini
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- pasang
 # han.sip pasang: pre-commit terpasang.
 
-npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang --check
+npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- pasang --check
 # han.sip pasang: sip.
 ```
 

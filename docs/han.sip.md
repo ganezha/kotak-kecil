@@ -103,8 +103,10 @@ root="$(git rev-parse --show-toplevel)" || exit 2
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
-exec npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --staged --quiet
+exec npx --yes github:ganezha/kotak-kecil#d67521f6ed1ea0b309912563f593bd506c87eada -- --staged --quiet
 ```
+
+Pin = commit SHA 40 hex (`PIN_SHA` di `pasang.mjs`), bukan tag `#v`. Tag bisa digeser.
 
 `--check` memastikan file hook ada dan mengandung marker kita (termasuk hook lama yang menunjuk `.githooks/pre-commit.mjs`).
 
