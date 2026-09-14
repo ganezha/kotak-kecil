@@ -237,10 +237,113 @@ test("detector ssh-key-file: id_rsa", async () => {
   }
 });
 
-test("detector key-file: *.pem", async () => {
-  const hits = [];
-  scanText("cert.pem", "not-empty\n", hits);
-  assert.equal(hits.some((h) => h.kind === "key-file"), true);
+test("detector key-file: *.p12 nama; *.pem hanya private/kosong, bukan sertifikat", async () => {
+  const cert = [];
+  scanText("cert.pem", `${palsu.certHeader()}\nMIIB\n-----END CERTIFICATE-----\n`, cert);
+  assert.equal(cert.some((h) => h.kind === "key-file"), false);
+  assert.equal(cert.some((h) => h.kind === "private-key"), false);
+
+  const fullchain = [];
+  scanText("fullchain.pem", `${palsu.certHeader()}\nMIIB\n-----END CERTIFICATE-----\n`, fullchain);
+  assert.deepEqual(fullchain, []);
+
+  const empty = [];
+  scanText("tls.key", "", empty);
+  assert.equal(empty.some((h) => h.kind === "key-file"), true);
+
+  const priv = [];
+  scanText("priv.pem", `${palsu.pemHeader()}\n`, priv);
+  assert.equal(priv.some((h) => h.kind === "private-key"), true);
+  assert.equal(priv.some((h) => h.kind === "key-file"), false);
+
+  const p12 = [];
+  scanText("client.p12", "binary-ish\n", p12);
+  assert.equal(p12.some((h) => h.kind === "key-file"), true);
+
+  const dir = await tmpDir();
+  try {
+    await writeFile(path.join(dir, "empty.pem"), "");
+    await writeFile(
+      path.join(dir, "cert.pem"),
+      `${palsu.certHeader()}\nX\n-----END CERTIFICATE-----\n`,
+    );
+    const { hits } = await scanFolder(dir);
+    assert.equal(hits.some((h) => h.kind === "key-file" && h.file === "empty.pem"), true);
+    assert.equal(hits.some((h) => h.file === "cert.pem"), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("detector openai-key: sk- klasik; sk-ant- bukan dobel", () => {
+  const classic = [];
+  const tok = palsu.openaiClassic();
+  scanText("app.js", `const x = "${tok}"\n`, classic);
+  assert.equal(classic.some((h) => h.kind === "openai-key"), true);
+
+  const ant = [];
+  scanText("app.js", `const x = "${palsu.anthropic()}"\n`, ant);
+  assert.equal(ant.some((h) => h.kind === "anthropic-key"), true);
+  assert.equal(ant.some((h) => h.kind === "openai-key"), false);
+
+  const stripe = [];
+  scanText("app.js", `const x = "${palsu.stripe()}"\n`, stripe);
+  assert.equal(stripe.some((h) => h.kind === "stripe-key"), true);
+  assert.equal(stripe.some((h) => h.kind === "openai-key"), false);
+});
+
+test("detector aws-secret: 40 karakter hanya dekat AKIA/AWS_SECRET", () => {
+  const secret = palsu.awsSecret();
+  const alone = [];
+  scanText("app.js", `const x = "${secret}"\n`, alone);
+  assert.equal(alone.some((h) => h.kind === "aws-secret"), false);
+
+  const same = [];
+  scanText("app.js", `aws_secret_access_key=${secret}\n`, same);
+  assert.equal(same.some((h) => h.kind === "aws-secret"), true);
+
+  const near = [];
+  scanText("app.js", `${palsu.aws()}\n${secret}\n`, near);
+  assert.equal(near.some((h) => h.kind === "aws-key-id"), true);
+  assert.equal(near.some((h) => h.kind === "aws-secret"), true);
+
+  const far = [];
+  scanText("app.js", `${palsu.aws()}\n\n\n${secret}\n`, far);
+  assert.equal(far.some((h) => h.kind === "aws-secret"), false);
+});
+
+test("detector seed-phrase: 12/24 kata + konteks; tanpa konteks diam", async () => {
+  const phrase = palsu.seed12();
+  const naked = [];
+  scanText("README.md", `${phrase}\n`, naked);
+  assert.equal(naked.some((h) => h.kind === "seed-phrase"), false);
+
+  const labeled = [];
+  scanText("notes.txt", `seed: ${phrase}\n`, labeled);
+  assert.equal(labeled.some((h) => h.kind === "seed-phrase" && h.line === 1), true);
+
+  const adj = [];
+  scanText("w.txt", `mnemonic\n${phrase}\n`, adj);
+  assert.equal(adj.some((h) => h.kind === "seed-phrase"), true);
+
+  const short = [];
+  scanText("w.txt", `wallet: ${Array.from({ length: 11 }, () => "alpha").join(" ")}\n`, short);
+  assert.equal(short.some((h) => h.kind === "seed-phrase"), false);
+
+  const twentyFour = [];
+  scanText("w.txt", `recovery ${palsu.seed24()}\n`, twentyFour);
+  assert.equal(twentyFour.some((h) => h.kind === "seed-phrase"), true);
+
+  const dir = await tmpDir();
+  try {
+    await writeFile(path.join(dir, "notes.txt"), `wallet seed\n${phrase}\n`);
+    const cli = await runCli(["."], dir);
+    assert.equal(cli.code, 1);
+    assert.match(cli.stdout, /seed-phrase/);
+    assert.equal(cli.stdout.includes(phrase), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test("bukan secret: string pendek tidak lolos ambang", () => {

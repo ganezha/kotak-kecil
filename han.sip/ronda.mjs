@@ -40,13 +40,20 @@ export const MAX_BYTES = 512 * 1024;
 
 export const FILE_RULES = [
   { kind: "env-file", test: (name) => name === ".env" || name.startsWith(".env.") },
-  { kind: "key-file", test: (name) => /\.(pem|key|p12|pfx)$/i.test(name) },
+  { kind: "key-file", test: (name) => /\.(p12|pfx)$/i.test(name) },
   { kind: "private-file", test: (name) => name.toLowerCase() === "private.txt" },
   {
     kind: "ssh-key-file",
     test: (name) => /^(id_rsa|id_dsa|id_ecdsa|id_ed25519)$/i.test(name),
   },
 ];
+
+const PEM_OR_KEY = /\.(pem|key)$/i;
+const PUBLIC_CERT = /-----BEGIN CERTIFICATE-----/;
+const AWS_SECRET_RE = /(?<![A-Za-z0-9/+])[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])/;
+const AWS_NEAR_RE = /AKIA[0-9A-Z]{16}|AWS_SECRET|aws_secret_access_key/i;
+const SEED_CTX_RE = /\b(?:seed|mnemonic|recovery|wallet)\b/i;
+const SEED_RUN_RE = /\b[a-z]+(?:\s+[a-z]+){11}(?:(?:\s+[a-z]+){12})?\b/;
 
 export const CONTENT_RULES = [
   {
@@ -59,13 +66,16 @@ export const CONTENT_RULES = [
   { kind: "aws-key-id", re: /\bAKIA[0-9A-Z]{16}\b/ },
   { kind: "slack-token", re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
   { kind: "stripe-key", re: /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}/ },
-  { kind: "openai-key", re: /\bsk-(?:proj-|svcacct-)[A-Za-z0-9_-]{20,}/ },
+  // sk-ant- sebelum sk- generik, supaya bukan openai-key. Span dobel dilewati scanLine.
   { kind: "anthropic-key", re: /\bsk-ant-[A-Za-z0-9_-]{20,}/ },
+  { kind: "openai-key", re: /\bsk-[A-Za-z0-9_-]{20,}/ },
   { kind: "google-api-key", re: /\bAIza[0-9A-Za-z_-]{35}\b/ },
   { kind: "npm-token", re: /\bnpm_[A-Za-z0-9]{36}\b/ },
   { kind: "gitlab-pat", re: /\bglpat-[A-Za-z0-9_-]{20,}/ },
   { kind: "huggingface-token", re: /\bhf_[A-Za-z0-9]{20,}/ },
 ];
+
+const PRIVATE_KEY_RE = CONTENT_RULES.find((r) => r.kind === "private-key").re;
 
 /** Nama template. Bukan temuan env-file. Isi tetap dironda. */
 export const isExampleEnv = (name) => name === ".env.example";
@@ -221,25 +231,69 @@ export function scanName(relFile, hits) {
   }
 }
 
+/**
+ * *.pem / *.key: nama = sinyal lemah.
+ * key-file hanya jika kosong/tidak terbaca.
+ * BEGIN PRIVATE KEY → private-key (isi), jangan dobel.
+ * BEGIN CERTIFICATE → bukan temuan.
+ */
+function considerKeyFile(relFile, hits, { text, empty = false, unreadable = false } = {}) {
+  if (!PEM_OR_KEY.test(path.basename(relFile))) return;
+  if (empty || unreadable || text == null || text.includes("\u0000")) {
+    pushHit(hits, relFile, 0, "key-file");
+    return;
+  }
+  if (PRIVATE_KEY_RE.test(text)) return;
+  if (PUBLIC_CERT.test(text)) return;
+}
+
+function scanAwsSecret(relFile, line, text, near, hits) {
+  if (!AWS_NEAR_RE.test(near)) return;
+  const m = AWS_SECRET_RE.exec(text);
+  if (!m) return;
+  pushHit(hits, relFile, line, "aws-secret", m[0]);
+}
+
+function scanSeedPhrase(relFile, line, text, near, hits) {
+  const m = text.match(SEED_RUN_RE);
+  if (!m) return;
+  const n = m[0].split(/\s+/).length;
+  if (n !== 12 && n !== 24) return;
+  if (!SEED_CTX_RE.test(near)) return;
+  pushHit(hits, relFile, line, "seed-phrase", m[0]);
+}
+
 export function scanContent(relFile, text, hits) {
   if (text == null) return;
   if (text.includes("\u0000")) return;
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
-    scanLine(relFile, i + 1, lines[i], hits);
+    const prev = i > 0 ? lines[i - 1] : "";
+    const next = i + 1 < lines.length ? lines[i + 1] : "";
+    scanLine(relFile, i + 1, lines[i], hits, { prev, next });
   }
 }
 
-export function scanLine(relFile, line, text, hits) {
+export function scanLine(relFile, line, text, hits, nearby = {}) {
   if (text == null || text.includes("\u0000")) return;
+  const caught = [];
   for (const rule of CONTENT_RULES) {
     const m = rule.re.exec(text);
-    if (m) pushHit(hits, relFile, line, rule.kind, m[0]);
+    if (!m) continue;
+    const a = m.index;
+    const b = a + m[0].length;
+    if (caught.some((s) => a < s.b && b > s.a)) continue;
+    caught.push({ a, b });
+    pushHit(hits, relFile, line, rule.kind, m[0]);
   }
+  const near = [nearby.prev, text, nearby.next].filter(Boolean).join("\n") || text;
+  scanAwsSecret(relFile, line, text, near, hits);
+  scanSeedPhrase(relFile, line, text, near, hits);
 }
 
 export function scanText(relFile, text, hits) {
   scanName(relFile, hits);
+  considerKeyFile(relFile, hits, { text, empty: text === "" });
   scanContent(relFile, text, hits);
 }
 
@@ -269,16 +323,30 @@ export async function scanFolder(root, { ignore = [] } = {}) {
     try {
       info = await stat(file);
     } catch {
+      considerKeyFile(shown, hits, { unreadable: true });
       continue;
     }
-    if (info.size === 0 || info.size > MAX_BYTES) continue;
+    if (info.size === 0) {
+      considerKeyFile(shown, hits, { empty: true });
+      continue;
+    }
+    if (info.size > MAX_BYTES) {
+      considerKeyFile(shown, hits, { unreadable: true });
+      continue;
+    }
     let text;
     try {
       text = await readFile(file, "utf8");
     } catch {
+      considerKeyFile(shown, hits, { unreadable: true });
       continue;
     }
-    scanContent(shown, text.includes("\u0000") ? "\u0000" : text, hits);
+    if (text.includes("\u0000")) {
+      considerKeyFile(shown, hits, { unreadable: true });
+      continue;
+    }
+    considerKeyFile(shown, hits, { text });
+    scanContent(shown, text, hits);
   }
   return { count, hits: uniqueHits(hits) };
 }
@@ -297,10 +365,23 @@ export async function scanStaged(root, { ignore = [] } = {}) {
     try {
       buf = await readStaged(root, relFile);
     } catch {
+      considerKeyFile(relFile, hits, { unreadable: true });
       continue;
     }
-    if (!buf.length || buf.length > MAX_BYTES) continue;
-    const text = buf.includes(0) ? "\u0000" : buf.toString("utf8");
+    if (!buf.length) {
+      considerKeyFile(relFile, hits, { empty: true });
+      continue;
+    }
+    if (buf.length > MAX_BYTES) {
+      considerKeyFile(relFile, hits, { unreadable: true });
+      continue;
+    }
+    if (buf.includes(0)) {
+      considerKeyFile(relFile, hits, { unreadable: true });
+      continue;
+    }
+    const text = buf.toString("utf8");
+    considerKeyFile(relFile, hits, { text });
     scanContent(relFile, text, hits);
   }
   return { count, hits: uniqueHits(hits) };
@@ -396,8 +477,16 @@ export async function scanDiff(
     if (isIgnored(relFile, ignore)) continue;
     count += 1;
     scanName(relFile, hits);
-    for (const row of file.added) {
-      scanLine(relFile, row.line, row.text, hits);
+    const addedText = file.added.map((row) => row.text).join("\n");
+    considerKeyFile(relFile, hits, {
+      text: addedText,
+      empty: file.isNew && addedText.length === 0,
+    });
+    for (let i = 0; i < file.added.length; i += 1) {
+      const row = file.added[i];
+      const prev = file.added[i - 1]?.line === row.line - 1 ? file.added[i - 1].text : "";
+      const next = file.added[i + 1]?.line === row.line + 1 ? file.added[i + 1].text : "";
+      scanLine(relFile, row.line, row.text, hits, { prev, next });
     }
   }
   return { count, hits: uniqueHits(hits) };
