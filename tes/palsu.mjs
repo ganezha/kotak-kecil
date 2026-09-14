@@ -6,9 +6,12 @@ export const palsu = {
   githubPat: () => `github_pat_${A(40)}`,
   telegram: () => `1234567890:${A(35)}`,
   aws: () => `AKIA${A(16)}`,
+  awsTemp: () => `ASIA${A(16)}`,
   awsSecret: () => "B".repeat(40),
   slack: () => ["xoxb", "1".repeat(12), A(24)].join("-"),
+  slackApp: () => ["xapp", "1", A(10), A(10), A(24)].join("-"),
   stripe: () => `sk_live_${A(24)}`,
+  stripeWebhook: () => `whsec_${A(32)}`,
   openai: () => `sk-proj-${A(40)}`,
   openaiClassic: () => `sk-${A(48)}`,
   anthropic: () => `sk-ant-${A(40)}`,
@@ -16,10 +19,18 @@ export const palsu = {
   npm: () => `npm_${A(36)}`,
   gitlab: () => `glpat-${A(22)}`,
   huggingface: () => `hf_${A(22)}`,
+  discord: () => `M${A(23)}.${A(6)}.${A(27)}`,
+  azure: () => `AccountKey=${A(88)}`,
+  gcpSa: () => {
+    const kind = "service_" + "account";
+    const key = "private" + "_key";
+    return `{"type": "${kind}", "${key}": "placeholder"}`;
+  },
   pemHeader: () => "-----BEGIN " + "RSA PRIVATE KEY-----",
   certHeader: () => "-----BEGIN " + "CERTIFICATE-----",
   seed12: () => Array.from({ length: 12 }, () => "alpha").join(" "),
-  seed24: () => Array.from({ length: 24 }, () => "bravo").join(" "),
+  seed24: () => Array.from({ length: 24 }, () => "abandon").join(" "),
+  seedFake: () => Array.from({ length: 12 }, () => "zzzzzz").join(" "),
   nilaiEnv: () => "jangan-cetak-nilai-ini",
   generic: () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";

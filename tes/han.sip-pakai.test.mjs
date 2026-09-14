@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
 import { parseArgs } from "../han.sip/cli.mjs";
@@ -14,7 +15,7 @@ import { fingerprint, fingerprint256, FP_HEX, SHA256_HEX, matchGlob, parseIgnore
 import { palsu } from "./palsu.mjs";
 
 const execFileP = promisify(execFile);
-const ROOT = path.resolve(import.meta.dirname, "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(ROOT, "han.sip", "cli.mjs");
 
 function runCli(args, cwd) {
@@ -68,8 +69,11 @@ test("parseArgs: flag baru", () => {
   assert.deepEqual(pl.plugin, ["a.mjs", "b.mjs"]);
   assert.throws(() => parseArgs(["node", "han.sip", "--plugin"]), /butuh file/);
   const d = parseArgs(["node", "han.sip", "--", "--json", "."]);
-  assert.equal(d.json, true);
-  assert.equal(d.folder, ".");
+  assert.equal(d.json, false);
+  assert.equal(d.folder, "--json");
+  const e = parseArgs(["node", "han.sip", "--plugins", "."]);
+  assert.equal(e.plugins, true);
+  assert.equal(e.folder, ".");
 });
 
 test("matchGlob: * ** dan nama tanpa slash", () => {
@@ -81,8 +85,10 @@ test("matchGlob: * ** dan nama tanpa slash", () => {
   assert.equal(matchGlob("app.js", "app.js"), true);
   assert.equal(matchGlob("src/app.ts", "app.js"), false);
   assert.equal(matchGlob("docs/x/y.md", "docs/**/*.md"), true);
+  assert.equal(matchGlob("a/z/b.js", "a/**/b.js"), true);
+  assert.equal(matchGlob("a/b.js", "a/**/b.js"), true);
   assert.equal(matchGlob(".env", ".env"), true);
-  assert.equal(parseIgnore("# x\n\ndocs/**\n").join(","), "docs/**");
+  assert.equal(parseIgnore("# x\n\ndocs/**\n!docs/keep.md\n").join(","), "docs/**,!docs/keep.md");
 });
 
 test("parseUnifiedDiff: baris + dan file baru", () => {
@@ -189,7 +195,7 @@ test("--baseline: temuan lama sip, temuan baru gagal", async () => {
     assert.equal(written.code, 0);
     const raw = JSON.parse(await readFile(path.join(dir, "base.json"), "utf8"));
     assert.equal(raw.hits.length, 1);
-    assert.equal(raw.version, 2);
+    assert.equal(raw.version, 3);
     assert.equal(raw.hits[0].fp.length, FP_HEX);
     assert.equal(raw.hits[0].sha256.length, SHA256_HEX);
     assert.equal(raw.note, BASELINE_NOTE);
@@ -317,10 +323,10 @@ test("symlink bin (npx) tetap menjalankan main", async () => {
   }
 });
 
-test("fingerprint: 128-bit + SHA-256 penuh, bukan token", () => {
+test("fingerprint: 128-bit + SHA-256 penuh, memuat line, bukan token", () => {
   const token = palsu.github();
-  const fp = fingerprint("github-token", "app.js", token);
-  const full = fingerprint256("github-token", "app.js", token);
+  const fp = fingerprint("github-token", "app.js", token, 1);
+  const full = fingerprint256("github-token", "app.js", token, 1);
   assert.match(fp, /^[0-9a-f]{32}$/);
   assert.match(full, /^[0-9a-f]{64}$/);
   assert.equal(fp.length, FP_HEX);
@@ -334,12 +340,15 @@ test("fingerprint: 128-bit + SHA-256 penuh, bukan token", () => {
     .update("\0")
     .update("app.js")
     .update("\0")
+    .update("1")
+    .update("\0")
     .update(token)
     .digest("hex");
   assert.equal(full, hashed);
   assert.equal(fp, hashed.slice(0, 32));
-  assert.notEqual(fingerprint("github-token", "other.js", token), fp);
-  assert.equal(fingerprint("github-token", "app.js", token), fp);
+  assert.notEqual(fingerprint("github-token", "other.js", token, 1), fp);
+  assert.equal(fingerprint("github-token", "app.js", token, 1), fp);
+  assert.notEqual(fingerprint("github-token", "app.js", token, 2), fp);
 });
 
 test("han.sip pasang: hook self-contained, --check sip", async () => {
@@ -383,6 +392,8 @@ test("npx pin: pasang + template + salinan = commit SHA", async () => {
     const body = await readFile(path.join(ROOT, rel), "utf8");
     assert.equal(body.includes(pin), true, rel);
     assert.equal(unpinned.test(body), false, `unpinned di ${rel}`);
+    assert.equal(body.includes("/main/gitignore"), false, `curl main di ${rel}`);
+    assert.equal(/curl[^\n]*-o \.gitignore/.test(body), false, `curl -o .gitignore di ${rel}`);
   }
 
   const hookSrc = await readFile(
@@ -511,6 +522,7 @@ test("plugin: --plugin dan auto .han.sip/plugins", async () => {
     const on = await runCli(["--plugin", "plug.mjs", "."], dir);
     assert.equal(on.code, 1);
     assert.match(on.stdout, /acme-key/);
+    assert.match(on.stderr, /eksekusi kode/);
     assert.equal(on.stdout.includes(val), false);
 
     await mkdir(path.join(dir, ".han.sip", "plugins"), { recursive: true });
@@ -520,9 +532,13 @@ test("plugin: --plugin dan auto .han.sip/plugins", async () => {
     );
     const autoVal = "auto_" + "C".repeat(20);
     await writeFile(path.join(dir, "b.js"), `const k = "${autoVal}"\n`);
-    const auto = await runCli(["."], dir);
+    const autoOff = await runCli(["--quiet", "."], dir);
+    assert.equal(autoOff.code, 0);
+
+    const auto = await runCli(["--plugins", "."], dir);
     assert.equal(auto.code, 1);
     assert.match(auto.stdout, /auto-key/);
+    assert.match(auto.stderr, /eksekusi kode/);
     assert.equal(auto.stdout.includes(autoVal), false);
 
     const bad = await runCli(["--plugin", "tidak-ada.mjs", "."], dir);

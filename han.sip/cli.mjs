@@ -43,20 +43,25 @@ Usage:
   han.sip --quiet               diam kalau sip; teriak kalau bukan
   han.sip --json                keluar JSON
   han.sip --sarif               keluar SARIF 2.1.0
-  han.sip --ignore <pola>       skip path (bisa diulang)
+  han.sip --ignore <pola>       skip path (bisa diulang; ! negasi)
   han.sip --baseline [file]     temuan diterima/di-suppress — bukan aman
   han.sip --write-baseline [file]  tulis fingerprint turunan (bukan plaintext)
-  han.sip --plugin <file.mjs>   aturan extra (bisa diulang)
+  han.sip --plugin <file.mjs>   aturan extra — EKSEKUSI KODE (bisa diulang)
+  han.sip --plugins             muat .han.sip/plugins/*.mjs (default: tidak)
   han.sip pasang                pre-commit di repo git ini
   han.sip pasang --check
 
 npm install ${NPX}
 npx han.sip .
 npx han.sip pasang
+npx jejak
 
-.han.sipignore di root repo ikut dibaca. Pola: * dan **.
-.han.sip/plugins/*.mjs auto. --plugin menambah.
+.han.sipignore di root repo ikut dibaca. Pola: * ** !.
+.han.sip/plugins/*.mjs tidak auto. --plugin / --plugins / HAN_SIP_PLUGINS=1.
+--staged [folder] = index, hanya path di bawah folder.
 --staged --diff = hanya baris baru di index.
+--diff tanpa HEAD (repo baru) = empty tree, bukan exit 2.
+-- mengakhiri flag (Unix).
 Hook yang teriak: cabut secret dari index. Jangan git commit --no-verify.
 --write-baseline tanpa rotate = memilih diam, bukan perbaikan.
 
@@ -90,9 +95,14 @@ export function parseArgs(argv) {
   let write = null;
   let check = false;
   const plugin = [];
+  let plugins = false;
 
   for (let i = 0; i < rest.length; i += 1) {
     const a = rest[i];
+    if (a === "--") {
+      positional.push(...rest.slice(i + 1));
+      break;
+    }
     if (a === "-h" || a === "--help") return { help: true };
     if (a === "--check") {
       check = true;
@@ -112,6 +122,10 @@ export function parseArgs(argv) {
     }
     if (a === "--sarif") {
       sarif = true;
+      continue;
+    }
+    if (a === "--plugins") {
+      plugins = true;
       continue;
     }
     if (a === "--diff" || a.startsWith("--diff=")) {
@@ -147,7 +161,6 @@ export function parseArgs(argv) {
       i = t.i;
       continue;
     }
-    if (a === "--") continue;
     if (a.startsWith("-")) throw new Error(`flag tidak dikenal: ${a}`);
     positional.push(a);
   }
@@ -171,6 +184,7 @@ export function parseArgs(argv) {
     diffRef,
     ignore,
     plugin,
+    plugins,
     baseline,
     writeBaseline: write,
     folder: positional[0] ?? ".",
@@ -222,11 +236,16 @@ async function main() {
     ignoreRoot = root;
   }
   const ignore = [...(await loadIgnoreFile(ignoreRoot)), ...opts.ignore];
+  const auto =
+    Boolean(opts.plugins) ||
+    process.env.HAN_SIP_PLUGINS === "1" ||
+    process.env.HAN_SIP_PLUGINS === "true";
   const loaded = await loadPlugins({
     root: ignoreRoot,
     files: (opts.plugin || []).map((p) =>
       path.isAbsolute(p) ? p : path.resolve(process.cwd(), p),
     ),
+    auto,
   });
   if (loaded.plugins.length) setRules(loaded.rules);
   const scanOpts = { ignore };
@@ -241,7 +260,7 @@ async function main() {
       pathFilter,
     });
   } else if (opts.staged) {
-    result = await scanStaged(root, scanOpts);
+    result = await scanStaged(root, { ...scanOpts, pathFilter });
   } else {
     result = await scanFolder(folder, scanOpts);
   }

@@ -7,6 +7,41 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-09-14
+
+### Security
+
+- Plugin: **tidak auto-load** `.han.sip/plugins/*.mjs`. `--plugins` / `HAN_SIP_PLUGINS=1` / `--plugin` = eksekusi kode. Peringatan stderr + sha256 file. [SECURITY.md](SECURITY.md).
+- Fingerprint memuat **nomor baris**. Baseline `version: 3`. Token yang sama di dua baris = dua temuan. v2 tidak match — tulis ulang `--write-baseline`.
+- Seed phrase: wordlist **BIP39 English**, bukan `[a-z]+` sembarang.
+- Stream UTF-8: leftover byte di batas chunk, bukan `toString` per 64 KiB.
+- `*.pem` / `*.key` besar tanpa header PEM → `key-file` (bukan diam).
+- `--diff` tanpa HEAD: empty tree, bukan exit 2.
+- Hook: pesan jujur kalau cli lokal / `node_modules/.bin/han.sip` tidak ada. `.githooks` coba bin npm sebelum npx.
+
+### Added
+
+- Detector: `ASIA` (AWS temporary), Slack `xoxe-` / `xapp-`, Stripe `whsec_`, Discord, Azure `AccountKey=`, GCP service account JSON, `.envrc`.
+- `--plugins`. `bin.jejak`. Ignore negasi `!`.
+- `--staged [folder]` menghormati path (bukan seluruh index).
+- CI matrix Node 18 / 20 / 22. Tes tanpa `import.meta.dirname`.
+
+### Fixed
+
+- `scanLine` loop semua match per rule; `lastIndex` tidak bocor (plugin `/g` file ke-2).
+- `parseArgs`: `--` mengakhiri flag (Unix).
+- Error git: maxBuffer / gagal lain bukan “bukan git repo”.
+- Template env (`.env.sample` `.env.template` `.env.test` …) bukan `env-file`.
+- Docs “Batas yang disengaja”: file > 512 KiB **tidak** dilewati.
+- curl gitignore pin SHA, bukan `main`; jangan `-o .gitignore`.
+- CoC: laporan perilaku bukan lewat security advisory.
+
+### Changed
+
+- `PIN_SHA` digeser ke rilis ini (commit susulan). 0.8.1 tertinggal di pohon 0.8.0.
+- `SKIP_EXT`: wasm, exe, sqlite, bin, dll, so, …
+- OpenAI klasik: `sk-` + 32+ alnum (bukan 20+ dengan hyphen).
+
 ## [0.8.1] — 2026-09-14
 
 ### Fixed
@@ -139,7 +174,8 @@ Toolbox **KOTAK kecil** versi satu angka di `package.json`. Tool baru = minor. B
 
 - Repo toolbox: satu tool, satu tugas.
 
-[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/ganezha/kotak-kecil/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/ganezha/kotak-kecil/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/ganezha/kotak-kecil/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/ganezha/kotak-kecil/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ganezha/kotak-kecil/compare/v0.6.0...v0.7.0

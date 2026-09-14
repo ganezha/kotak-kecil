@@ -1,6 +1,6 @@
 # Versioning
 
-Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.8.1`.
+Satu angka untuk seluruh kotak, di [`package.json`](../package.json). Sekarang `0.9.0`.
 
 Ikut [SemVer](https://semver.org/). Di **0.x**, minor boleh breaking. Major `1.0.0` = janji stabil + (mungkin) npm.
 
@@ -17,18 +17,22 @@ Detector baru = minor, bukan patch: CI yang kemarin hijau bisa jadi `bukan sip`.
 
 `jejak` dan `han.sip` naik versi **bersama**. Tidak ada versi per-tool.
 
+Fingerprint baseline v3 memuat `line`. v2 (tanpa line) tidak match — tulis ulang `--write-baseline`.
+
 ## Tag
 
 Tag git = `v` + angka `package.json`.
 
 ```text
-package.json  0.8.1
-git tag       v0.8.1
-GitHub Release v0.8.1
+package.json  0.9.0
+git tag       v0.9.0
+GitHub Release v0.9.0
 npx pin       github:ganezha/kotak-kecil# + 40 hex (PIN_SHA)
 ```
 
 Jangan tag kalau angka di `package.json` belum diganti.
+
+Nama registry (`"name": "han.sip"`) bukan nama repo (`kotak-kecil`). Kalau suatu hari npm: cek tabrakan nama dulu. [RELEASE.md](RELEASE.md).
 
 ## Changelog
 
