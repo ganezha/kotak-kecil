@@ -41,7 +41,9 @@ Lewati: `.git`, `node_modules`, `dist`, `build`, `coverage`, `.next`, `.turbo`, 
 
 Folder tersembunyi **tetap** diwalk (`.github`, `.hidden`, `.ssh`, `.config`, …). `.git` tidak — itu objek git, bukan sumber.
 
-Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` atau kosong: nama tetap dicek, isi tidak. Null byte → isi tidak discan (bukan teks).
+Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File kosong: nama tetap dicek, isi tidak. File `> 512 KiB`: isi di-stream (chunk), bukan di-skip. Null byte → isi tidak discan (bukan teks).
+
+Symlink **tidak diikuti** — file maupun folder. Target di luar repo tidak dibaca (traversal).
 
 ## Aturan
 
@@ -59,6 +61,8 @@ Lewati ekstensi biner (`png` `jpg` `pdf` `zip` `woff` …). File `> 512 KiB` ata
 OpenAI: `sk-` + 20+ (klasik, `sk-proj-`, `sk-svcacct-`). Bukan hanya proj/svcacct.
 
 AWS secret: 40 karakter `[A-Za-z0-9/+=]`, hanya di baris dekat `AKIA` / `AWS_SECRET` / `aws_secret_access_key`. Bukan entropy buta di seluruh file.
+
+`generic-secret`: kandidat 24+ dengan **confidence** 0–1. Teriak kalau skor ≥ 0.6. Naik kalau ada kata `secret` / `token` / `password` / `api_key` / `bearer` di baris yang sama, entropy tinggi, atau bentuk JWT `eyJ….….…`. Turun untuk SHA hex 40/64, `sha512-` npm, URL. Span yang sudah tertangkap named rule tidak dobel. JSON/SARIF: `conf` / `properties.confidence`. Nilai tidak dicetak.
 
 Seed phrase: 12 atau 24 kata Latin lowercase dipisah spasi, plus konteks `seed` / `mnemonic` / `recovery` / `wallet` di baris itu atau tetangga. Tanpa konteks tidak teriak (README).
 
@@ -100,6 +104,14 @@ Git tree sering `0644`, jadi `pasang` tidak andalkan bit `+x`. Yang dieksekusi g
 
 ```sh
 root="$(git rev-parse --show-toplevel)" || exit 2
+prev="$(dirname "$0")/pre-commit.han.sip-prev"
+if [ -f "$prev" ]; then
+  if [ -x "$prev" ]; then
+    "$prev" "$@" || exit $?
+  else
+    /bin/sh "$prev" "$@" || exit $?
+  fi
+fi
 if [ -f "$root/han.sip/cli.mjs" ]; then
   exec node "$root/han.sip/cli.mjs" --staged --quiet
 fi
@@ -110,7 +122,7 @@ Pin = commit SHA 40 hex (`PIN_SHA` di `pasang.mjs`), bukan tag `#v`. Tag bisa di
 
 `--check` memastikan file hook ada dan mengandung marker kita (termasuk hook lama yang menunjuk `.githooks/pre-commit.mjs`).
 
-Hook asing (tidak ada marker): disalin ke `pre-commit.bak` (atau `.bak.<epoch>`), lalu ditimpa. Hook kita ditimpa tanpa cadangan — itu upgrade pin. `.githooks/pre-commit.mjs` memakai `NPX` yang sama.
+Hook asing (tidak ada marker): disalin ke `pre-commit.han.sip-prev` lalu **di-chain** (prev dulu, han.sip kemudian). Cadangan `pre-commit.bak` (atau `.bak.<epoch>`) tetap ada. Prev yang exit ≠ 0 menggagalkan commit — han.sip tidak dijalankan. Hook kita ditimpa tanpa cadangan — itu upgrade pin. `.githooks/pre-commit.mjs` memakai `NPX` yang sama.
 
 `han.sip pasang` (atau `node han.sip/pasang.mjs`) jalan di repo **mana pun**. Tidak perlu menyalin `.githooks`.
 

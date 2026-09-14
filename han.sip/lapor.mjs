@@ -40,7 +40,8 @@ export function printHuman({ count, hits, staged, diff, quiet, suppressed }) {
   if (!quiet) console.log(`ronda: ${count} file${extra}`);
   console.log("");
   for (const hit of hits) {
-    console.log(`! ${hit.kind.padEnd(16)} ${where(hit)}`);
+    const conf = hit.conf != null ? ` ${Number(hit.conf).toFixed(2)}` : "";
+    console.log(`! ${hit.kind.padEnd(16)} ${where(hit)}${conf}`);
   }
   console.log("");
   const base = accepted ? ` ${accepted}` : "";
@@ -49,8 +50,10 @@ export function printHuman({ count, hits, staged, diff, quiet, suppressed }) {
   return 1;
 }
 
-function publicHit({ file, line, kind, fp }) {
-  return { file: posixPath(file), line, kind, fp };
+function publicHit({ file, line, kind, fp, conf }) {
+  const o = { file: posixPath(file), line, kind, fp };
+  if (conf != null) o.conf = conf;
+  return o;
 }
 
 export function toJson({
@@ -116,6 +119,7 @@ export function toSarif({ hits, version }) {
             ],
           };
           if (h.fp) result.partialFingerprints = { "han.sip/v1": h.fp };
+          if (h.conf != null) result.properties = { confidence: h.conf };
           return result;
         }),
       },

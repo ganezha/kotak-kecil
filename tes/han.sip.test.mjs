@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import test from "node:test";
-import { scanFolder, scanStaged, scanText } from "../han.sip/ronda.mjs";
+import { MAX_BYTES, scanFolder, scanStaged, scanText } from "../han.sip/ronda.mjs";
 import { palsu } from "./palsu.mjs";
 
 const execFileP = promisify(execFile);
@@ -407,4 +407,131 @@ test("npm lifecycle tidak nulis .git", async () => {
     assert.equal(script.includes("pasang"), false, name);
   }
   assert.equal(pkg.scripts["han.sip:pasang"], "node han.sip/cli.mjs pasang");
+});
+
+test("stream: file >512 KiB tetap dironda; token tidak dicetak", async () => {
+  const dir = await tmpDir();
+  try {
+    const token = palsu.github();
+    const pad = "x".repeat(MAX_BYTES + 64);
+    await writeFile(path.join(dir, "big.js"), `${pad}\nconst t = "${token}"\n`);
+    const { hits } = await scanFolder(dir);
+    assert.equal(
+      hits.some((h) => h.kind === "github-token" && h.file === "big.js"),
+      true,
+    );
+    const cli = await runCli(["."], dir);
+    assert.equal(cli.code, 1);
+    assert.match(cli.stdout, /github-token/);
+    assert.equal(cli.stdout.includes(token), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("stream: token di awal file besar", async () => {
+  const dir = await tmpDir();
+  try {
+    const token = palsu.github();
+    const pad = "y".repeat(MAX_BYTES + 64);
+    await writeFile(path.join(dir, "head.js"), `const t = "${token}"\n${pad}\n`);
+    const { hits } = await scanFolder(dir);
+    assert.equal(hits.some((h) => h.kind === "github-token"), true);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("stream: --staged file >512 KiB", async () => {
+  const dir = await tmpDir();
+  try {
+    await gitInit(dir);
+    const token = palsu.github();
+    const pad = "z".repeat(MAX_BYTES + 64);
+    await writeFile(path.join(dir, "staged.js"), `${pad}\nconst t = "${token}"\n`);
+    await gitAdd(dir, "staged.js");
+    const { hits } = await scanStaged(dir);
+    assert.equal(hits.some((h) => h.kind === "github-token"), true);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("generic-secret: keyword + entropy; skor; bukan dobel named rule", async () => {
+  const val = palsu.generic();
+  const hits = [];
+  scanText("cfg.js", `const secret = "${val}"\n`, hits);
+  const g = hits.filter((h) => h.kind === "generic-secret");
+  assert.equal(g.length, 1);
+  assert.equal(g[0].conf >= 0.6, true);
+  assert.equal(g[0].line, 1);
+
+  const low = [];
+  scanText("cfg.js", `const secret = "${"a".repeat(44)}"\n`, low);
+  assert.equal(low.some((h) => h.kind === "generic-secret"), false);
+
+  const unlabeled = [];
+  scanText("cfg.js", `const x = "${val}"\n`, unlabeled);
+  assert.equal(unlabeled.some((h) => h.kind === "generic-secret"), false);
+
+  const urlLine = [];
+  scanText(
+    "CONTRIBUTING.md",
+    "PRs with tokens. Secret: https://github.com/ganezha/kotak-kecil/security/advisories/new\n",
+    urlLine,
+  );
+  assert.equal(urlLine.some((h) => h.kind === "generic-secret"), false);
+
+  const named = palsu.github();
+  const both = [];
+  scanText("app.js", `const secret = "${named}"\n`, both);
+  assert.equal(both.some((h) => h.kind === "github-token"), true);
+  assert.equal(both.some((h) => h.kind === "generic-secret"), false);
+
+  const jwtHits = [];
+  const jwt = palsu.jwt();
+  scanText("auth.js", `Authorization: Bearer ${jwt}\n`, jwtHits);
+  assert.equal(jwtHits.some((h) => h.kind === "generic-secret" && h.conf >= 0.6), true);
+
+  const dir = await tmpDir();
+  try {
+    await writeFile(path.join(dir, "cfg.js"), `const secret = "${val}"\n`);
+    const cli = await runCli(["--json", "."], dir);
+    assert.equal(cli.code, 1);
+    const body = JSON.parse(cli.stdout);
+    const hit = body.hits.find((h) => h.kind === "generic-secret");
+    assert.equal(Boolean(hit), true);
+    assert.equal(typeof hit.conf, "number");
+    assert.equal(hit.conf >= 0.6, true);
+    assert.equal(JSON.stringify(body).includes(val), false);
+    assert.match(cli.stdout, /generic-secret/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("walk: symlink ke luar repo tidak diikuti", async () => {
+  const dir = await tmpDir();
+  const outside = await tmpDir();
+  try {
+    const token = palsu.github();
+    await writeFile(path.join(outside, "secret"), `export const t = "${token}"\n`);
+    await mkdir(path.join(outside, "box"));
+    await writeFile(path.join(outside, "box", "x.js"), `export const t = "${token}"\n`);
+    await symlink(path.join(outside, "secret"), path.join(dir, "leak"));
+    await symlink(path.join(outside, "box"), path.join(dir, "out-dir"));
+    await symlink(
+      path.relative(dir, path.join(outside, "secret")),
+      path.join(dir, "rel-leak"),
+    );
+    const { hits, count } = await scanFolder(dir);
+    assert.equal(hits.length, 0);
+    assert.equal(count, 0);
+    const cli = await runCli(["."], dir);
+    assert.equal(cli.code, 0);
+    assert.equal(cli.stdout.includes(token), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  }
 });
