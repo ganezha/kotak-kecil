@@ -52,6 +52,8 @@ npx --yes ${NPX} -- pasang
 
 .han.sipignore di root repo ikut dibaca. Pola: * dan **.
 --staged --diff = hanya baris baru di index.
+Hook yang teriak: cabut secret dari index. Jangan git commit --no-verify.
+--write-baseline tanpa rotate = memilih diam, bukan perbaikan.
 
 Exit:
   0  sip

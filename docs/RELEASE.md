@@ -28,8 +28,23 @@ Belum npm. `private: true` itu disengaja. Distribusi = `npx github:ganezha/kotak
 
 4. GitHub → Releases → **Draft a new release** dari tag `vX.Y.Z`.
    Body = isi seksi changelog versi itu, bukan esai.
+   Kalau *immutable releases* aktif: publish setelah draft siap. Tag dan aset terkunci.
 5. Jangan `npm publish` selama `"private": true`.
 6. Cek dari repo **lain**: `npx --yes github:ganezha/kotak-kecil#vX.Y.Z -- --help` harus mencetak usage.
+
+## Immutable
+
+Pertimbangkan **immutable releases** (repo: Settings → General → Releases → Enable release immutability). Setelah publish:
+
+- tag rilis tidak bisa digeser atau dihapus
+- aset rilis tidak bisa ditambah/diubah/dihapus
+- judul dan catatan masih bisa diedit
+
+`npx github:ganezha/kotak-kecil#vX.Y.Z` mengandalkan tag itu. Tag yang bisa digeser = pin palsu.
+
+Rilis ini tidak mengunggah aset terpisah (npx ambil tree dari tag). Immutable tetap berguna: mengunci tag.
+
+Salah angka setelah publish: rilis patch. Jangan geser tag.
 
 ## Kalau suatu hari npm
 

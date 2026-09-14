@@ -6,6 +6,9 @@
  *   - kalau han.sip/cli.mjs ada di repo (kotak-kecil sendiri) → node lokal
  *   - kalau tidak (repo orang lain) → npx github:ganezha/kotak-kecil#v + package.json
  *
+ * Hook asing: cadangan ke pre-commit.bak (atau .bak.<epoch> kalau sudah ada),
+ * lalu timpa. Bukan diam-diam. Bukan alasan git commit --no-verify.
+ *
  * Manual. Jangan ikat ke npm prepare/postinstall — itu nulis .git
  * setiap npm install.
  *
@@ -13,7 +16,7 @@
  */
 import { execFile } from "node:child_process";
 import { readFileSync, realpathSync } from "node:fs";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -42,6 +45,19 @@ function isOurs(body) {
     body.includes(".githooks/pre-commit.mjs") ||
     body.includes("han.sip/cli.mjs")
   );
+}
+
+async function backupIfForeign(dest, existing) {
+  if (!existing || isOurs(existing)) return null;
+  let bak = `${dest}.bak`;
+  try {
+    await stat(bak);
+    bak = `${dest}.bak.${Date.now()}`;
+  } catch {
+    /* first backup */
+  }
+  await writeFile(bak, existing, { encoding: "utf8", mode: 0o755 });
+  return bak;
 }
 
 async function toplevel() {
@@ -82,6 +98,16 @@ export async function pasang({ check = false } = {}) {
   }
 
   await mkdir(path.dirname(dest), { recursive: true });
+  let existing = "";
+  try {
+    existing = await readFile(dest, "utf8");
+  } catch {
+    existing = "";
+  }
+  const bak = await backupIfForeign(dest, existing);
+  if (bak) {
+    console.warn(`han.sip pasang: hook asing. Cadangan: ${bak}`);
+  }
   await writeFile(dest, hookBody(), { encoding: "utf8", mode: 0o755 });
   await chmod(dest, 0o755);
   console.log("han.sip pasang: pre-commit terpasang.");

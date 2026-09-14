@@ -7,12 +7,12 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu (tanpa clone)
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- .
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --staged
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --diff
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --json .
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- .
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --staged
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --diff
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --json .
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang
 ```
 
 `--` memisahkan npm dari han.sip. Jangan dihapus di depan flag.
@@ -37,8 +37,8 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --quiet .
-- run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
+- run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --quiet .
+- run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@v3
   with:
     sarif_file: han.sip.sarif
@@ -99,7 +99,7 @@ node han.sip/cli.mjs ~/proyek/bot
 ### Bantuan
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --help
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --help
 node han.sip/cli.mjs --help
 ```
 
@@ -108,14 +108,18 @@ Isi `--help` ikut versi. Jangan menghafal dump di sini.
 ### Pasang hook di repo ini
 
 ```bash
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang
 # han.sip pasang: pre-commit terpasang.
 
-npx --yes github:ganezha/kotak-kecil#v0.4.0 -- pasang --check
+npx --yes github:ganezha/kotak-kecil#v0.5.0 -- pasang --check
 # han.sip pasang: sip.
 ```
 
 Commit berikutnya: yang di-stage dironda. Unstaged `.env` tidak menghalangi (itu kerjaan folder scan / CI).
+
+Kalau `.git/hooks/pre-commit` sudah ada dan **bukan** punya han.sip: file lama disalin ke `pre-commit.bak` (atau `.bak.<epoch>` kalau cadangan itu sudah ada), baru ditimpa. Baca cadangan sebelum commit berikutnya.
+
+**Jangan** `git commit --no-verify`. Hook yang teriak = ada secret di index. Cabut dari stage. Kalau sudah pernah masuk history: rotate, baru (kalau perlu) baseline.
 
 ### Diff — hanya baris baru
 
@@ -170,7 +174,7 @@ node han.sip/cli.mjs --baseline .
 # "sip. N diterima di baseline — bukan aman."
 ```
 
-Kalau nilai itu sempat masuk git: rotate dulu, baru tulis baseline.
+Kalau nilai itu sempat masuk git: **rotate dulu**, baru tulis baseline. Baseline bukan pengganti rotate. Bukan alasan `git commit --no-verify`.
 
 Gabung: `--baseline --write-baseline` menulis set *sekarang* (refresh), lalu exit menurut temuan baru vs file lama.
 

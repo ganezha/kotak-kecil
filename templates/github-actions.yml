@@ -1,5 +1,5 @@
 # Salin ke .github/workflows/han.sip.yml di repo kamu.
-# Pin ke rilis. Jangan hapus #v0.4.0 — itu v + angka package.json.
+# Pin ke rilis. Jangan hapus #v0.5.0 — itu v + angka package.json.
 name: han.sip
 
 on:
@@ -21,11 +21,11 @@ jobs:
           node-version: "22"
 
       - name: ronda malam
-        run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --quiet .
+        run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --quiet .
 
       - name: SARIF
         if: always()
-        run: npx --yes github:ganezha/kotak-kecil#v0.4.0 -- --sarif . > han.sip.sarif
+        run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
 
       - name: upload SARIF
         if: always()
