@@ -39,7 +39,7 @@ Inti:
 ```yaml
 - run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --quiet .
 - run: npx --yes github:ganezha/kotak-kecil#v0.5.0 -- --sarif . > han.sip.sarif
-- uses: github/codeql-action/upload-sarif@v3
+- uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
   with:
     sarif_file: han.sip.sarif
 ```

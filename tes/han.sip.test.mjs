@@ -224,14 +224,50 @@ for (const [kind, make] of DETECT) {
   });
 }
 
-test("detector ssh-key-file: id_rsa", async () => {
+test("detector ssh-key-file: .ssh/id_rsa", async () => {
   const dir = await tmpDir();
   try {
     await mkdir(path.join(dir, ".ssh"));
-    // walk skips hidden dirs except .github — taruh di root
-    await writeFile(path.join(dir, "id_rsa"), "not-a-real-key\n");
+    await writeFile(path.join(dir, ".ssh", "id_rsa"), "not-a-real-key\n");
     const { hits } = await scanFolder(dir);
-    assert.equal(hits.some((h) => h.kind === "ssh-key-file"), true);
+    assert.equal(
+      hits.some(
+        (h) =>
+          h.kind === "ssh-key-file" &&
+          h.file.replaceAll("\\", "/").endsWith(".ssh/id_rsa"),
+      ),
+      true,
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("walk: .hidden/secret tertangkap; .git dilewati", async () => {
+  const dir = await tmpDir();
+  try {
+    await mkdir(path.join(dir, ".hidden"));
+    await mkdir(path.join(dir, ".git"));
+    const token = palsu.github();
+    await writeFile(path.join(dir, ".hidden", "secret"), `export const t = "${token}"\n`);
+    await writeFile(path.join(dir, ".git", "config"), `export const t = "${token}"\n`);
+    const { hits } = await scanFolder(dir);
+    assert.equal(
+      hits.some(
+        (h) =>
+          h.kind === "github-token" &&
+          h.file.replaceAll("\\", "/").endsWith(".hidden/secret"),
+      ),
+      true,
+    );
+    assert.equal(
+      hits.some((h) => h.file.replaceAll("\\", "/").includes(".git/")),
+      false,
+    );
+    const cli = await runCli(["."], dir);
+    assert.equal(cli.code, 1);
+    assert.match(cli.stdout, /\.hidden\/secret/);
+    assert.equal(cli.stdout.includes(token), false);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
