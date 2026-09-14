@@ -10,6 +10,7 @@ import { posixPath } from "./ronda.mjs";
 export const DEFAULT_BASELINE = ".han.sip-baseline.json";
 export const BASELINE_NOTE =
   "diterima/di-suppress, bukan aman. Kalau sempat masuk git: rotate.";
+export const BASELINE_VERSION = 3;
 
 function where(hit) {
   return hit.line ? `${hit.file}:${hit.line}` : hit.file;
@@ -156,10 +157,11 @@ export function splitBaseline(hits, fps) {
 
 export async function writeBaseline(file, hits) {
   const body = {
-    version: 2,
+    version: BASELINE_VERSION,
     note: BASELINE_NOTE,
-    hits: hits.map(({ file: f, kind, fp, sha256 }) => ({
+    hits: hits.map(({ file: f, kind, fp, sha256, line }) => ({
       file: posixPath(f),
+      line: line ?? 0,
       kind,
       fp,
       sha256,

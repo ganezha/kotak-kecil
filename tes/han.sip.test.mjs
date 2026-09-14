@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -10,7 +11,7 @@ import { MAX_BYTES, scanFolder, scanStaged, scanText } from "../han.sip/ronda.mj
 import { palsu } from "./palsu.mjs";
 
 const execFileP = promisify(execFile);
-const ROOT = path.resolve(import.meta.dirname, "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(ROOT, "han.sip", "cli.mjs");
 const FIX_ENV = path.join(ROOT, "tes", "fixtures", "dot-env");
 

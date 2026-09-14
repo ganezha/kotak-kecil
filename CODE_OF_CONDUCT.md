@@ -32,7 +32,9 @@ This CoC applies in the GitHub repo, issues, pull requests, commit messages, and
 
 ## Enforcement
 
-Report to the maintainer via a **private** [GitHub security advisory](https://github.com/ganezha/kotak-kecil/security/advisories/new) if it involves leaked credentials, or email the account that owns this repository for conduct issues.
+**Leaked credentials / tool vulns:** private [GitHub security advisory](https://github.com/ganezha/kotak-kecil/security/advisories/new).
+
+**Conduct / harassment:** do **not** file a security advisory (advisory can become public after publish). Contact the owner [@ganezha](https://github.com/ganezha) privately, or use [GitHub report abuse](https://github.com/contact/report-abuse).
 
 Maintainers will:
 

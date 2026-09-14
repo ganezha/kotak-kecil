@@ -2,6 +2,8 @@
 # Pin ke commit SHA (bukan tag yang bisa digeser).
 # Pin actions ke commit SHA. Komentar = versi yang di-pin.
 # npm install github:… — jangan `npx github:` (npm 10 GitFetcher).
+# Node 18+ didukung; template memakai 22. Matrix 18/20/22 ada di CI kotak ini.
+# npm run bench sengaja tidak di CI.
 name: han.sip
 
 on:
@@ -23,7 +25,7 @@ jobs:
           node-version: "22"
 
       - name: pasang han.sip
-        run: npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+        run: npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 
       - name: ronda malam
         run: npx han.sip --quiet .

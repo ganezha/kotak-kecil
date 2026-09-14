@@ -4,12 +4,18 @@
  */
 import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { lstat, readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileP = promisify(execFile);
+
+const BIP39 = new Set(
+  readFileSync(new URL("./bip39-en.txt", import.meta.url), "utf8")
+    .trim()
+    .split(/\r?\n/),
+);
 
 export const SKIP_DIR = new Set([
   ".git",
@@ -35,6 +41,19 @@ export const SKIP_EXT = new Set([
   ".woff",
   ".woff2",
   ".ttf",
+  ".wasm",
+  ".exe",
+  ".dll",
+  ".so",
+  ".dylib",
+  ".bin",
+  ".sqlite",
+  ".sqlite3",
+  ".db",
+  ".class",
+  ".o",
+  ".obj",
+  ".pyc",
 ]);
 
 export const MAX_BYTES = 512 * 1024;
@@ -42,9 +61,16 @@ export const STREAM_CHUNK = 64 * 1024;
 const LINE_WINDOW = 64 * 1024;
 const LINE_OVERLAP = 2048;
 export const GENERIC_MIN_CONF = 0.6;
+/** git empty tree. --diff tanpa HEAD (repo baru) memakai ini. */
+export const EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+const GIT_MAX_BUFFER = 32 * 1024 * 1024;
 
 export const FILE_RULES = [
-  { kind: "env-file", test: (name) => name === ".env" || name.startsWith(".env.") },
+  {
+    kind: "env-file",
+    test: (name) =>
+      name === ".env" || name === ".envrc" || name.startsWith(".env."),
+  },
   { kind: "key-file", test: (name) => /\.(p12|pfx)$/i.test(name) },
   { kind: "private-file", test: (name) => name.toLowerCase() === "private.txt" },
   {
@@ -55,14 +81,24 @@ export const FILE_RULES = [
 
 const PEM_OR_KEY = /\.(pem|key)$/i;
 const PUBLIC_CERT = /-----BEGIN CERTIFICATE-----/;
-const AWS_SECRET_RE = /(?<![A-Za-z0-9/+])[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])/;
-const AWS_NEAR_RE = /AKIA[0-9A-Z]{16}|AWS_SECRET|aws_secret_access_key/i;
+const AWS_SECRET_RE = /(?<![A-Za-z0-9/+])[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])/g;
+const AWS_NEAR_RE = /AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AWS_SECRET|aws_secret_access_key/i;
 const SEED_CTX_RE = /\b(?:seed|mnemonic|recovery|wallet)\b/i;
-const SEED_RUN_RE = /\b[a-z]+(?:\s+[a-z]+){11}(?:(?:\s+[a-z]+){12})?\b/;
 const KW_RE =
   /\b(?:secret|password|passwd|token|api[_-]?key|access[_-]?key|private[_-]?key|credential|auth(?:orization)?|bearer)\b/i;
 const JWT_RE = /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g;
 const GENERIC_CAND_RE = /[A-Za-z0-9_+-]{24,}/g;
+const GCP_SA_TYPE = /"type"\s*:\s*"service_account"/;
+const GCP_SA_PK = /"private_key"/;
+
+const EXAMPLE_ENV = new Set([
+  ".env.example",
+  ".env.sample",
+  ".env.template",
+  ".env.test",
+  ".env.testing",
+  ".env.default",
+]);
 
 export const CONTENT_RULES = [
   {
@@ -72,22 +108,26 @@ export const CONTENT_RULES = [
   { kind: "github-token", re: /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}/ },
   { kind: "github-pat", re: /\bgithub_pat_[A-Za-z0-9_]{20,}/ },
   { kind: "telegram-token", re: /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/ },
-  { kind: "aws-key-id", re: /\bAKIA[0-9A-Z]{16}\b/ },
-  { kind: "slack-token", re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
+  { kind: "aws-key-id", re: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/ },
+  { kind: "slack-token", re: /\b(?:xox[baprs]|xoxe|xapp)-[A-Za-z0-9-]{10,}/ },
   { kind: "stripe-key", re: /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}/ },
+  { kind: "stripe-key", re: /\bwhsec_[A-Za-z0-9]{16,}/ },
   // sk-ant- sebelum sk- generik, supaya bukan openai-key. Span dobel dilewati scanLine.
   { kind: "anthropic-key", re: /\bsk-ant-[A-Za-z0-9_-]{20,}/ },
-  { kind: "openai-key", re: /\bsk-[A-Za-z0-9_-]{20,}/ },
+  { kind: "openai-key", re: /\bsk-(?:proj-|svcacct-)[A-Za-z0-9_-]{20,}/ },
+  { kind: "openai-key", re: /\bsk-[A-Za-z0-9]{32,}/ },
   { kind: "google-api-key", re: /\bAIza[0-9A-Za-z_-]{35}\b/ },
   { kind: "npm-token", re: /\bnpm_[A-Za-z0-9]{36}\b/ },
   { kind: "gitlab-pat", re: /\bglpat-[A-Za-z0-9_-]{20,}/ },
   { kind: "huggingface-token", re: /\bhf_[A-Za-z0-9]{20,}/ },
+  { kind: "discord-token", re: /\b(?:[MN][A-Za-z0-9_-]{23,}|mfa\.[A-Za-z0-9_-]{20,})\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{25,}\b/ },
+  { kind: "azure-storage", re: /\b(?:AccountKey|SharedAccessKey)=[A-Za-z0-9+/=]{40,}/ },
 ];
 
 const PRIVATE_KEY_RE = CONTENT_RULES.find((r) => r.kind === "private-key").re;
 
 /** Nama template. Bukan temuan env-file. Isi tetap dironda. */
-export const isExampleEnv = (name) => name === ".env.example";
+export const isExampleEnv = (name) => EXAMPLE_ENV.has(name);
 
 export const IGNORE_FILE = ".han.sipignore";
 
@@ -98,27 +138,30 @@ export function posixPath(p) {
 /**
  * Fingerprint turunan, bukan plaintext token.
  *
- * sha256(kind || NUL || posix(file) || NUL || matched_piece)
+ * sha256(kind || NUL || posix(file) || NUL || line || NUL || matched_piece)
  *   fp     = 32 hex (128 bit) — identitas baseline / unik
  *   sha256 = 64 hex (penuh)
  * `piece` adalah potongan yang cocok rule (bisa material secret).
- * Satu arah. Bukan credential. Tetap bukti string berbentuk secret ada di path itu.
+ * `line` membedakan salinan token yang sama di baris lain.
+ * Satu arah. Bukan credential. Tetap bukti string berbentuk secret ada di path+baris itu.
  */
 export const FP_HEX = 32;
 export const SHA256_HEX = 64;
 
-export function fingerprint256(kind, file, piece = "") {
+export function fingerprint256(kind, file, piece = "", line = 0) {
   const h = createHash("sha256");
   h.update(kind);
   h.update("\0");
   h.update(posixPath(file));
   h.update("\0");
+  h.update(String(line ?? 0));
+  h.update("\0");
   h.update(piece);
   return h.digest("hex");
 }
 
-export function fingerprint(kind, file, piece = "") {
-  return fingerprint256(kind, file, piece).slice(0, FP_HEX);
+export function fingerprint(kind, file, piece = "", line = 0) {
+  return fingerprint256(kind, file, piece, line).slice(0, FP_HEX);
 }
 
 export function shannon(s) {
@@ -158,7 +201,7 @@ export function genericConfidence(piece, { keyword = false, jwt = false } = {}) 
 }
 
 function pushHit(hits, file, line, kind, piece = "", conf) {
-  const sha256 = fingerprint256(kind, file, piece);
+  const sha256 = fingerprint256(kind, file, piece, line);
   const hit = {
     file,
     line,
@@ -185,6 +228,26 @@ function contentRules() {
 
 function fileRules() {
   return activeFile || FILE_RULES;
+}
+
+/**
+ * Semua match, lastIndex tidak bocor ke pemanggilan berikutnya.
+ * Flag `g` di plugin tidak mematikan file ke-2.
+ */
+export function matchAll(re, text) {
+  if (!re || text == null) return [];
+  const flags = re.flags.includes("g") ? re.flags : `${re.flags}g`;
+  const g = new RegExp(re.source, flags);
+  const out = [];
+  let m;
+  while ((m = g.exec(text))) {
+    out.push(m);
+    if (m[0].length === 0) {
+      g.lastIndex += 1;
+      if (g.lastIndex > text.length) break;
+    }
+  }
+  return out;
 }
 
 function globRe(pattern) {
@@ -235,9 +298,27 @@ export function parseIgnore(text) {
     .filter((l) => l && !l.startsWith("#"));
 }
 
+/** Last-match-wins, termasuk negasi `!`. Tidak membaca .gitignore repo. */
 export function isIgnored(rel, patterns) {
   if (!patterns?.length) return false;
-  return patterns.some((p) => matchGlob(rel, p));
+  let ignored = false;
+  for (const raw of patterns) {
+    const negated = raw.startsWith("!");
+    const p = negated ? raw.slice(1) : raw;
+    if (!p) continue;
+    if (matchGlob(rel, p)) ignored = !negated;
+  }
+  return ignored;
+}
+
+export function pathUnder(rel, filter) {
+  const s = posixPath(rel).replace(/^\.\//, "");
+  let f = posixPath(filter || "")
+    .replace(/^\.\//, "")
+    .replace(/\\/g, "/");
+  f = f.replace(/\/+$/, "");
+  if (!f || f === ".") return true;
+  return s === f || s.startsWith(`${f}/`);
 }
 
 export async function loadIgnoreFile(root) {
@@ -270,17 +351,87 @@ export async function walk(dir, files) {
   }
 }
 
+function gitErrText(err) {
+  const stderr = err?.stderr;
+  const fromErr =
+    stderr == null
+      ? ""
+      : Buffer.isBuffer(stderr)
+        ? stderr.toString("utf8")
+        : String(stderr);
+  return `${fromErr}\n${err?.message || ""}`;
+}
+
+function isMaxBuffer(err) {
+  return (
+    err?.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ||
+    /maxBuffer/i.test(String(err?.message || ""))
+  );
+}
+
+function firstErrLine(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .find(Boolean) || "";
+}
+
+async function gitStdout(root, args, { encoding = "utf8", maxBuffer = GIT_MAX_BUFFER } = {}) {
+  try {
+    const { stdout } = await execFileP("git", args, {
+      cwd: root,
+      encoding,
+      maxBuffer,
+    });
+    return stdout;
+  } catch (err) {
+    if (err && err.code === "ENOENT") throw new Error("git tidak ada di PATH");
+    throw err;
+  }
+}
+
+async function refExists(root, ref) {
+  try {
+    await execFileP("git", ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`], {
+      cwd: root,
+    });
+    return true;
+  } catch {
+    try {
+      await execFileP("git", ["rev-parse", "--verify", "--quiet", `${ref}^{tree}`], {
+        cwd: root,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export async function diffRef(root, ref = "HEAD") {
+  if (await refExists(root, ref)) return ref;
+  if (ref === "HEAD") return EMPTY_TREE;
+  throw new Error(`ref tidak ada: ${ref}`);
+}
+
 export async function listStaged(root) {
   let stdout;
   try {
-    ({ stdout } = await execFileP(
-      "git",
-      ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"],
-      { cwd: root, maxBuffer: 10 * 1024 * 1024 },
-    ));
+    stdout = await gitStdout(root, [
+      "diff",
+      "--cached",
+      "--name-only",
+      "-z",
+      "--diff-filter=ACMR",
+    ]);
   } catch (err) {
-    if (err.code === "ENOENT") throw new Error("git tidak ada di PATH");
-    throw new Error("bukan git repo. --staged butuh .git");
+    if (err.message === "git tidak ada di PATH") throw err;
+    if (isMaxBuffer(err)) throw new Error("git diff terlalu besar (--staged)");
+    const msg = gitErrText(err);
+    if (/not a git repository/i.test(msg)) {
+      throw new Error("bukan git repo. --staged butuh .git");
+    }
+    throw new Error(firstErrLine(msg) || "git diff --cached gagal");
   }
   return stdout.split("\0").filter(Boolean);
 }
@@ -304,39 +455,85 @@ export function scanName(relFile, hits) {
 
 /**
  * *.pem / *.key: nama = sinyal lemah.
- * key-file hanya jika kosong/tidak terbaca.
+ * key-file hanya jika kosong/tidak terbaca, atau file besar sudah di-scan
+ * tanpa BEGIN PRIVATE KEY / BEGIN CERTIFICATE.
  * BEGIN PRIVATE KEY → private-key (isi), jangan dobel.
  * BEGIN CERTIFICATE → bukan temuan.
  */
-function considerKeyFile(relFile, hits, { text, empty = false, unreadable = false, sawPrivate = false, sawCert = false } = {}) {
+function considerKeyFile(
+  relFile,
+  hits,
+  {
+    text,
+    empty = false,
+    unreadable = false,
+    sawPrivate = false,
+    sawCert = false,
+    scanned = false,
+  } = {},
+) {
   if (!PEM_OR_KEY.test(path.basename(relFile))) return;
-  if (empty || unreadable || text == null || text.includes("\u0000")) {
+  PRIVATE_KEY_RE.lastIndex = 0;
+  PUBLIC_CERT.lastIndex = 0;
+  if (sawPrivate || (text && PRIVATE_KEY_RE.test(text))) return;
+  if (sawCert || (text && PUBLIC_CERT.test(text))) return;
+  if (
+    empty ||
+    unreadable ||
+    text == null ||
+    (typeof text === "string" && text.includes("\u0000")) ||
+    scanned
+  ) {
     pushHit(hits, relFile, 0, "key-file");
-    return;
   }
-  if (sawPrivate || PRIVATE_KEY_RE.test(text)) return;
-  if (sawCert || PUBLIC_CERT.test(text)) return;
 }
 
 function scanAwsSecret(relFile, line, text, near, hits) {
+  AWS_NEAR_RE.lastIndex = 0;
   if (!AWS_NEAR_RE.test(near)) return;
-  const m = AWS_SECRET_RE.exec(text);
-  if (!m) return;
-  pushHit(hits, relFile, line, "aws-secret", m[0]);
+  for (const m of matchAll(AWS_SECRET_RE, text)) {
+    pushHit(hits, relFile, line, "aws-secret", m[0]);
+  }
 }
 
 function scanSeedPhrase(relFile, line, text, near, hits) {
-  const m = text.match(SEED_RUN_RE);
-  if (!m) return;
-  const n = m[0].split(/\s+/).length;
-  if (n !== 12 && n !== 24) return;
+  SEED_CTX_RE.lastIndex = 0;
   if (!SEED_CTX_RE.test(near)) return;
-  pushHit(hits, relFile, line, "seed-phrase", m[0]);
+  const tokens = [];
+  const wordRe = /\b[a-z]+\b/g;
+  let m;
+  while ((m = wordRe.exec(text))) tokens.push({ w: m[0], i: m.index });
+  const used = new Set();
+  for (const n of [24, 12]) {
+    for (let i = 0; i + n <= tokens.length; i += 1) {
+      if (used.has(i)) continue;
+      const slice = tokens.slice(i, i + n);
+      if (!slice.every((t) => BIP39.has(t.w))) continue;
+      const start = slice[0].i;
+      const end = slice[n - 1].i + slice[n - 1].w.length;
+      const piece = text.slice(start, end);
+      if (!/^[a-z]+(?:\s+[a-z]+)+$/.test(piece)) continue;
+      pushHit(hits, relFile, line, "seed-phrase", piece);
+      for (let k = 0; k < n; k += 1) used.add(i + k);
+    }
+  }
+}
+
+function scanGcpSa(relFile, text, hits, gcp) {
+  if (gcp) {
+    if (GCP_SA_TYPE.test(text)) gcp.type = true;
+    if (GCP_SA_PK.test(text)) gcp.pk = true;
+    return;
+  }
+  if (GCP_SA_TYPE.test(text) && GCP_SA_PK.test(text)) {
+    pushHit(hits, relFile, 1, "gcp-service-account", "service_account");
+  }
 }
 
 export function scanContent(relFile, text, hits) {
   if (text == null) return;
   if (text.includes("\u0000")) return;
+  scanGcpSa(relFile, text, hits);
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
     const prev = i > 0 ? lines[i - 1] : "";
@@ -349,13 +546,13 @@ export function scanLine(relFile, line, text, hits, nearby = {}) {
   if (text == null || text.includes("\u0000")) return;
   const caught = [];
   for (const rule of contentRules()) {
-    const m = rule.re.exec(text);
-    if (!m) continue;
-    const a = m.index;
-    const b = a + m[0].length;
-    if (caught.some((s) => a < s.b && b > s.a)) continue;
-    caught.push({ a, b });
-    pushHit(hits, relFile, line, rule.kind, m[0]);
+    for (const m of matchAll(rule.re, text)) {
+      const a = m.index;
+      const b = a + m[0].length;
+      if (caught.some((s) => a < s.b && b > s.a)) continue;
+      caught.push({ a, b });
+      pushHit(hits, relFile, line, rule.kind, m[0]);
+    }
   }
   const near = [nearby.prev, text, nearby.next].filter(Boolean).join("\n") || text;
   scanAwsSecret(relFile, line, text, near, hits);
@@ -365,15 +562,11 @@ export function scanLine(relFile, line, text, hits, nearby = {}) {
 
 function scanGeneric(relFile, line, text, hits, caught) {
   const keyword = KW_RE.test(text);
-  JWT_RE.lastIndex = 0;
-  GENERIC_CAND_RE.lastIndex = 0;
   for (const spec of [
     { re: JWT_RE, jwt: true },
     { re: GENERIC_CAND_RE, jwt: false },
   ]) {
-    spec.re.lastIndex = 0;
-    let m;
-    while ((m = spec.re.exec(text))) {
+    for (const m of matchAll(spec.re, text)) {
       const a = m.index;
       const b = a + m[0].length;
       if (caught.some((s) => a < s.b && b > s.a)) continue;
@@ -404,19 +597,49 @@ export function uniqueHits(hits) {
 }
 
 function notePem(text, pem) {
+  PRIVATE_KEY_RE.lastIndex = 0;
+  PUBLIC_CERT.lastIndex = 0;
   if (PRIVATE_KEY_RE.test(text)) pem.priv = true;
   if (PUBLIC_CERT.test(text)) pem.cert = true;
 }
 
-function emitStreamLine(relFile, lineNo, text, prev, next, hits, pem) {
+function emitStreamLine(relFile, lineNo, text, prev, next, hits, pem, gcp) {
   scanLine(relFile, lineNo, text, hits, { prev, next });
   notePem(text, pem);
+  scanGcpSa(relFile, text, hits, gcp);
+}
+
+/**
+ * Byte di ekor yang merupakan sekuens UTF-8 belum lengkap.
+ * 0 = semua byte di `buf` bisa di-decode.
+ */
+export function utf8IncompleteTail(buf) {
+  const n = buf.length;
+  if (n === 0) return 0;
+  if ((buf[n - 1] & 0x80) === 0) return 0;
+  let i = n - 1;
+  let cont = 0;
+  while (i >= 0 && (buf[i] & 0xc0) === 0x80) {
+    cont += 1;
+    i -= 1;
+    if (cont > 3) return 0;
+  }
+  if (i < 0) return n;
+  const lead = buf[i];
+  let need;
+  if ((lead & 0xe0) === 0xc0) need = 1;
+  else if ((lead & 0xf0) === 0xe0) need = 2;
+  else if ((lead & 0xf8) === 0xf0) need = 3;
+  else return 0;
+  if (cont >= need) return 0;
+  return n - i;
 }
 
 /**
  * Isi file besar: chunk, bukan Buffer utuh.
  * Baris ditahan satu langkah supaya prev/next ada.
  * Baris raksasa tanpa newline dipecah jendela + overlap.
+ * UTF-8: leftover byte di batas chunk, bukan toString per chunk.
  */
 export async function scanBufferStream(relFile, readable, hits) {
   let pending = "";
@@ -424,11 +647,13 @@ export async function scanBufferStream(relFile, readable, hits) {
   let hold = null;
   let lineNo = 1;
   let binary = false;
+  let leftover = Buffer.alloc(0);
   const pem = { priv: false, cert: false };
+  const gcp = { type: false, pk: false };
 
   const emitHeld = (nextText) => {
     if (!hold) return;
-    emitStreamLine(relFile, hold.lineNo, hold.text, hold.prev, nextText, hits, pem);
+    emitStreamLine(relFile, hold.lineNo, hold.text, hold.prev, nextText, hits, pem, gcp);
     hold = null;
   };
 
@@ -443,23 +668,32 @@ export async function scanBufferStream(relFile, readable, hits) {
     while (pending.length > LINE_WINDOW) {
       const slice = pending.slice(0, LINE_WINDOW);
       emitHeld("");
-      emitStreamLine(relFile, lineNo, slice, prevComplete, "", hits, pem);
+      emitStreamLine(relFile, lineNo, slice, prevComplete, "", hits, pem, gcp);
       pending = pending.slice(LINE_WINDOW - LINE_OVERLAP);
       prevComplete = "";
     }
   };
 
+  const takeDecoded = (buf) => {
+    const combined = leftover.length ? Buffer.concat([leftover, buf]) : buf;
+    const tail = utf8IncompleteTail(combined);
+    const complete = tail ? combined.subarray(0, combined.length - tail) : combined;
+    leftover = tail ? Buffer.from(combined.subarray(combined.length - tail)) : Buffer.alloc(0);
+    return complete.toString("utf8");
+  };
+
   for await (const chunk of readable) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    if (buf.includes(0)) {
+    if (buf.includes(0) || leftover.includes(0)) {
       binary = true;
       break;
     }
-    pending += buf.toString("utf8");
-    if (pending.includes("\u0000")) {
+    const decoded = takeDecoded(buf);
+    if (decoded.includes("\u0000")) {
       binary = true;
       break;
     }
+    pending += decoded;
     for (;;) {
       const crlf = pending.indexOf("\r\n");
       const lf = pending.indexOf("\n");
@@ -485,10 +719,14 @@ export async function scanBufferStream(relFile, readable, hits) {
     considerKeyFile(relFile, hits, { unreadable: true });
     return;
   }
+  if (leftover.length) pending += leftover.toString("utf8");
   if (pending.length) pushCompleteLine(pending);
   emitHeld("");
+  if (gcp.type && gcp.pk) {
+    pushHit(hits, relFile, 1, "gcp-service-account", "service_account");
+  }
   considerKeyFile(relFile, hits, {
-    text: "ok",
+    scanned: true,
     sawPrivate: pem.priv,
     sawCert: pem.cert,
   });
@@ -576,11 +814,12 @@ export async function scanFolder(root, { ignore = [] } = {}) {
   return { count, hits: uniqueHits(hits) };
 }
 
-export async function scanStaged(root, { ignore = [] } = {}) {
+export async function scanStaged(root, { ignore = [], pathFilter = "" } = {}) {
   const rels = await listStaged(root);
   const hits = [];
   let count = 0;
   for (const relFile of rels) {
+    if (pathFilter && !pathUnder(relFile, pathFilter)) continue;
     const name = path.basename(relFile);
     if (SKIP_EXT.has(path.extname(name).toLowerCase())) continue;
     if (isIgnored(relFile, ignore)) continue;
@@ -682,6 +921,7 @@ export async function scanDiff(
   root,
   { ignore = [], ref = "HEAD", staged = false, pathFilter = "" } = {},
 ) {
+  const compare = await diffRef(root, ref);
   const args = [
     "diff",
     "--unified=0",
@@ -690,25 +930,23 @@ export async function scanDiff(
     "--diff-filter=ACMR",
   ];
   if (staged) args.push("--cached");
-  args.push(ref);
+  args.push(compare);
   if (pathFilter && pathFilter !== ".") args.push("--", pathFilter);
 
   let stdout;
   try {
-    ({ stdout } = await execFileP("git", args, {
-      cwd: root,
-      maxBuffer: 10 * 1024 * 1024,
-    }));
+    stdout = await gitStdout(root, args);
   } catch (err) {
-    if (err && err.code === "ENOENT") throw new Error("git tidak ada di PATH");
-    const msg = String(err?.stderr || err?.message || "");
+    if (err.message === "git tidak ada di PATH") throw err;
+    if (isMaxBuffer(err)) throw new Error("git diff terlalu besar");
+    const msg = gitErrText(err);
     if (/bad revision|unknown revision|ambiguous argument|Needed a single revision/i.test(msg)) {
       throw new Error(`ref tidak ada: ${ref}`);
     }
     if (/not a git repository/i.test(msg)) {
       throw new Error("bukan git repo. --diff butuh .git");
     }
-    throw new Error("bukan git repo. --diff butuh .git");
+    throw new Error(firstErrLine(msg) || "git diff gagal");
   }
 
   const files = parseUnifiedDiff(stdout);

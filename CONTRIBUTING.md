@@ -17,13 +17,16 @@ A tool belongs in this toolbox if:
 
 1. Open an issue first if the change is more than a typo — pakai template di `.github/ISSUE_TEMPLATE/`
 2. Fork, branch, pull request against `main` (ada [PR template](.github/PULL_REQUEST_TEMPLATE.md))
-3. `npm test` must pass
-   - han.sip: fixture `.env`, staged vs unstaged, token palsu, json/sarif/diff/baseline/ignore, plugin, fuzz diff
+3. `npm test` must pass on Node **18+** (CI matrix 18 / 20 / 22). Tes memakai `import.meta.url`, bukan `import.meta.dirname`.
+   - han.sip: fixture `.env`, staged vs unstaged, token palsu, json/sarif/diff/baseline/ignore, plugin, fuzz diff, regresi audit
    - jejak: repo kosong, hari ke-2, jendela
-   - `npm run bench` opsional, bukan CI
+   - `npm run bench` opsional, **bukan** CI
 4. README / docs / `[Unreleased]` di [CHANGELOG.md](CHANGELOG.md) kalau user-facing
 5. Jangan nulis `.git` dari npm lifecycle
+6. Review: repo ini historis author = merger. Itu risiko. PR tetap lebih baik daripada push diam-diam ke `main` — ada artefak review meski reviewer cuma satu.
 
 PRs with `.env`, keys, or tokens will be closed. Secret yang sudah masuk git: rotate, lalu [advisory](https://github.com/ganezha/kotak-kecil/security/advisories/new) — hapus file tidak cukup.
 
 Detector kind baru = versi minor. Lihat [docs/VERSIONING.md](docs/VERSIONING.md).
+
+Plugin = eksekusi kode. Jangan auto-load di tes kecuali tes itu memang menguji `--plugins`.

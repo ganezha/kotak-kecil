@@ -7,13 +7,14 @@ Syarat: [INSTALL.md](INSTALL.md). Node 18+.
 ## Di repo kamu
 
 ```bash
-npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 npx han.sip .
 npx han.sip --staged
 npx han.sip --diff
 npx han.sip --json .
 npx han.sip --sarif . > han.sip.sarif
 npx han.sip pasang
+npx jejak
 ```
 
 ## Hasil
@@ -36,7 +37,7 @@ Salin [`templates/github-actions.yml`](../templates/github-actions.yml) ke `.git
 Inti:
 
 ```yaml
-- run: npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+- run: npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 - run: npx han.sip --quiet .
 - run: npx han.sip --sarif . > han.sip.sarif
 - uses: github/codeql-action/upload-sarif@faaca9a8f6edddba5725ffe5adefdab6669a2eca # v3.38.0
@@ -81,11 +82,12 @@ Hanya path, baris, kind. Bukan nilai token.
 
 ### Git index (pre-commit)
 
-Working tree kotor tidak dihitung. Yang dihitung: `git add`.
+Working tree kotor tidak dihitung. Yang dihitung: `git add`. Folder membatasi path:
 
 ```bash
 node han.sip/cli.mjs --staged
 node han.sip/cli.mjs --staged --quiet
+node han.sip/cli.mjs --staged src
 ```
 
 `--quiet` / `HAN_SIP_QUIET=1`: tidak nulis apa-apa kalau sip. Tetap teriak kalau bukan.
@@ -117,13 +119,13 @@ npx han.sip pasang --check
 
 Commit berikutnya: yang di-stage dironda. Unstaged `.env` tidak menghalangi (itu kerjaan folder scan / CI).
 
-Kalau `.git/hooks/pre-commit` sudah ada dan **bukan** punya han.sip: file lama disalin ke `pre-commit.bak` (atau `.bak.<epoch>` kalau cadangan itu sudah ada), baru ditimpa. Baca cadangan sebelum commit berikutnya.
+Kalau `.git/hooks/pre-commit` sudah ada dan **bukan** punya han.sip: file lama disalin ke `pre-commit.han.sip-prev` lalu **di-chain** (prev dulu → han.sip). Cadangan `pre-commit.bak` (atau `.bak.<epoch>` kalau cadangan itu sudah ada) tetap ada. Bukan hanya timpa.
 
 **Jangan** `git commit --no-verify`. Hook yang teriak = ada secret di index. Cabut dari stage. Kalau sudah pernah masuk history: rotate, baru (kalau perlu) baseline.
 
 ### Diff — hanya baris baru
 
-Secret yang sudah di `HEAD` tidak teriak. Yang baru kamu ketik, iya.
+Secret yang sudah di `HEAD` tidak teriak. Yang baru kamu ketik, iya. Repo baru tanpa `HEAD`: empty tree, bukan gagal.
 
 ```bash
 node han.sip/cli.mjs --diff              # vs HEAD (working tree + index)
@@ -141,7 +143,7 @@ node han.sip/cli.mjs --sarif . > han.sip.sarif
 # Actions: upload han.sip.sarif pakai github/codeql-action/upload-sarif
 ```
 
-`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — `file`, `line`, `kind`, `fp` (128 bit), `sha256` (penuh). Bukan plaintext. Lihat [SECURITY.md](../SECURITY.md).
+`--quiet` tetap nulis JSON. Isi secret tidak ada di payload — `file`, `line`, `kind`, `fp` (128 bit), `sha256` (penuh), `conf` (generic-secret). Bukan plaintext. Lihat [SECURITY.md](../SECURITY.md).
 
 `ok: true` = sip. `ok: false` = ada temuan. `hits[].kind` + `hits[].file` — tidak ada nilai token.
 
@@ -149,6 +151,7 @@ node han.sip/cli.mjs --sarif . > han.sip.sarif
 
 ```bash
 node han.sip/cli.mjs --ignore 'docs/**' --ignore '*.md' .
+node han.sip/cli.mjs --ignore 'vendor/**' --ignore '!vendor/keep.js' .
 ```
 
 Atau file di root repo:
@@ -156,8 +159,11 @@ Atau file di root repo:
 ```gitignore
 # .han.sipignore
 vendor/**
+!vendor/keep.js
 docs/EXAMPLES.md
 ```
+
+Tidak membaca `.gitignore` git. Secret di path yang sudah di-ignore git tetap discan di mode folder kecuali pola di sini.
 
 ### Baseline (repo yang sudah kotor)
 
@@ -178,13 +184,22 @@ Kalau nilai itu sempat masuk git: **rotate dulu**, baru tulis baseline. Baseline
 
 Gabung: `--baseline --write-baseline` menulis set *sekarang* (refresh), lalu exit menurut temuan baru vs file lama.
 
+### Plugin (eksekusi kode)
+
+```bash
+node han.sip/cli.mjs --plugin extra.mjs .
+node han.sip/cli.mjs --plugins .    # .han.sip/plugins/*.mjs
+```
+
+Default: **tidak** auto-load. Lihat [SECURITY.md](../SECURITY.md).
+
 ### Yang ditangkap (bentuk, bukan nilai)
 
-File: `.env`, `.env.*` kecuali nama `.env.example`, `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk. `*.pem` `*.key` hanya kalau private key / kosong / tidak terbaca — sertifikat publik (`fullchain.pem`, `cert.pem`) bukan temuan.
+File: `.env`, `.envrc`, `.env.*` kecuali nama template (`.env.example` `.env.sample` `.env.template` `.env.test` …), `*.p12` `*.pfx`, `private.txt`, `id_rsa` / `id_ed25519` dkk. `*.pem` `*.key` hanya kalau private key / kosong / tidak terbaca / stream besar tanpa header PEM — sertifikat publik (`fullchain.pem`, `cert.pem`) bukan temuan.
 
 `.env.example` tidak dihitung `env-file`. **Isinya tetap dironda.** `API_KEY=` lolos. Token berbentuk secret di situ tidak.
 
-Isi: private key PEM, `ghp_` / `github_pat_`, token Telegram, `AKIA…` + secret 40 karakter dekatnya, Slack `xox*`, Stripe, OpenAI `sk-` (klasik, proj, svcacct), Anthropic `sk-ant-`, Google `AIza`, `npm_`, GitLab `glpat-`, Hugging Face `hf_`, seed phrase 12/24 kata plus konteks (`seed` / `mnemonic` / `recovery` / `wallet`).
+Isi: private key PEM, `ghp_` / `github_pat_`, token Telegram, `AKIA`/`ASIA` + secret 40 karakter dekatnya, Slack `xox*` / `xapp-`, Stripe + `whsec_`, OpenAI `sk-proj-` / `sk-svcacct-` / klasik 32+, Anthropic `sk-ant-`, Google `AIza`, `npm_`, GitLab `glpat-`, Hugging Face `hf_`, Discord, Azure storage key, GCP service-account JSON, seed phrase BIP39 12/24 kata plus konteks (`seed` / `mnemonic` / `recovery` / `wallet`).
 
 Lihat aturan persis di [han.sip.md](han.sip.md).
 
@@ -196,6 +211,7 @@ Commit per hari di repo **saat ini**. Graph baru hidup di hari ke-2.
 node jejak/cli.mjs        # 14 hari
 node jejak/cli.mjs 7
 node jejak/cli.mjs 30
+npx jejak
 node jejak/cli.mjs --help
 ```
 
@@ -221,9 +237,12 @@ Rentang: 1–366. `node jejak/cli.mjs 0` gagal.
 
 ## gitignore + env.example
 
+Pin SHA, bukan `main`. Jangan `-o .gitignore` (menimpa).
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/node.gitignore -o .gitignore
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/templates/env.example -o .env.example
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/gitignore/node.gitignore -o gitignore.node
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/templates/env.example -o env.example.kotak
+cp env.example.kotak .env.example
 cp .env.example .env
 ```
 

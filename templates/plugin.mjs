@@ -1,5 +1,8 @@
 /**
- * Salin ke `.han.sip/plugins/` atau `han.sip --plugin file.mjs`.
+ * Salin ke `.han.sip/plugins/` lalu `han.sip --plugins`,
+ * atau `han.sip --plugin file.mjs`.
+ * Default: folder plugins TIDAK di-load.
+ * Plugin = eksekusi kode di proses yang sama. Jangan di tree yang tidak kamu percaya.
  * kind baru = temuan extra. Jangan mencetak nilai.
  */
 export const rules = {

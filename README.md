@@ -4,13 +4,16 @@ Kotak perkakas MIT milik [Ganezha](https://github.com/ganezha). Satu tool, satu 
 
 A public toolbox. Small tools, one job each.
 
+Repo ini **kotak-kecil**. Paket npm (belum registry) bernama `"han.sip"` — itu nama bin, bukan nama kotak. **Jangan** `npm i han.sip`.
+
 ## Pakai han.sip sekarang
 
-Node **18+**. Di repo kamu. `npx github:…` di npm 10 sering gagal (`GitFetcher`); pasang lewat git SHA:
+Node **18+** (CI menguji 18 / 20 / 22). Di repo kamu. `npx github:…` di npm 10 sering gagal (`GitFetcher`); pasang lewat git SHA:
 
 ```bash
-npm install github:ganezha/kotak-kecil#38477de22ecaff33198be1e9509ab1de188c17fd
+npm install github:ganezha/kotak-kecil#9bcdc2b03566769f20012b173b6eee7ded014669
 npx han.sip .
+npx jejak
 ```
 ```text
 han.sip
@@ -52,22 +55,25 @@ Belum npm registry. **Jangan** `npm i han.sip`.
 
 ### [`han.sip`](han.sip/cli.mjs)
 
-Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau ada `.env`, key, atau token berbentuk secret — teriak pelan. Isi secret tidak dicetak. Isi yang dibaca untuk `--staged` datang dari git index, bukan working tree.
+Ronda malam untuk git. Cek folder — atau **hanya file yang di-stage**. Kalau ada `.env`, key, atau token berbentuk secret — teriak pelan. Isi secret tidak dicetak. Isi yang dibaca untuk `--staged` datang dari git index, bukan working tree. `--staged src` hanya path di bawah `src`.
 
 ```bash
 node han.sip/cli.mjs .           # seluruh folder (CI)
 node han.sip/cli.mjs --staged    # git index
-node han.sip/cli.mjs --diff      # baris baru vs HEAD
+node han.sip/cli.mjs --diff      # baris baru vs HEAD (repo baru: empty tree)
 node han.sip/cli.mjs --json
 node han.sip/cli.mjs --sarif     # GitHub code scanning
 node han.sip/cli.mjs --baseline  # temuan diterima — bukan aman
-node han.sip/cli.mjs --plugin x.mjs
+node han.sip/cli.mjs --plugin x.mjs   # EKSEKUSI KODE. lihat SECURITY.md
+node han.sip/cli.mjs --plugins        # .han.sip/plugins/*.mjs (default mati)
 node han.sip/cli.mjs pasang      # pre-commit (manual)
 ```
 
-`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; selain itu npx pin commit SHA. Hook asing: di-chain (`pre-commit.han.sip-prev`) plus cadangan `pre-commit.bak`. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
+`han.sip pasang` merakit shim `0755` di `.git/hooks/pre-commit`. Lokal `han.sip/cli.mjs` kalau ada; lalu `node_modules/.bin/han.sip`; selain itu npx pin commit SHA (npm 10 sering gagal — pasang lewat `npm install`). Hook asing: **di-chain** (`pre-commit.han.sip-prev` dulu, han.sip kemudian) plus cadangan `pre-commit.bak`. Fail closed. Tidak global. Tidak lewat `npm prepare` / `postinstall`.
 
 Hook yang teriak: cabut secret dari index. **Jangan** `git commit --no-verify`. **Jangan** `--write-baseline` sebagai ganti rotate.
+
+Plugin = **eksekusi JavaScript dari tree yang sedang discan**. Tidak auto-load. `--plugin` / `--plugins` sadar-risiko.
 
 ```bash
 npm test
@@ -77,11 +83,12 @@ Desain: [docs/han.sip.md](docs/han.sip.md). Model keamanan: [SECURITY.md](SECURI
 
 ### [`jejak`](jejak/cli.mjs)
 
-Commit per hari. Graph baru hidup di hari ke-2.
+Commit per hari. Graph baru hidup di hari ke-2. Ada di `bin` (`npx jejak`).
 
 ```bash
 node jejak/cli.mjs        # 14 hari
 node jejak/cli.mjs 30
+npx jejak
 ```
 
 Desain: [docs/jejak.md](docs/jejak.md).
@@ -90,8 +97,11 @@ Desain: [docs/jejak.md](docs/jejak.md).
 
 Strict gitignore for Node.js so `.env`, private keys, and dumps never reach GitHub.
 
+Pin ke commit SHA, **bukan** `main`. **Jangan** `-o .gitignore` kalau file itu sudah ada (menimpa).
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/main/gitignore/node.gitignore -o .gitignore
+curl -fsSL https://raw.githubusercontent.com/ganezha/kotak-kecil/9bcdc2b03566769f20012b173b6eee7ded014669/gitignore/node.gitignore -o gitignore.node
+# gabung manual ke .gitignore kamu
 ```
 
 ### [`templates/env.example`](templates/env.example)
@@ -118,7 +128,7 @@ Tool berikutnya: file dulu, bukan README.
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Review tunggal (author = merger) adalah risiko yang diketahui.
 
 ## License
 
